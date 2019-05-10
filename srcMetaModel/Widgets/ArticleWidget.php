@@ -20,12 +20,14 @@
 
 namespace MetaModels\AttributeTranslatedContentArticleBundle\Widgets;
 
+use Contao\Widget;
+
 /**
  * Class ArticleWidget
  *
  * @package MetaModels\AttributeTranslatedContentArticleBundle\Widgets
  */
-class ArticleWidget extends \Contao\Widget
+class ArticleWidget extends Widget
 {
 
     /**

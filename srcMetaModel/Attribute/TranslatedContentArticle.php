@@ -24,7 +24,6 @@ namespace MetaModels\AttributeTranslatedContentArticleBundle\Attribute;
 use Contao\System;
 use MetaModels\Attribute\BaseSimple;
 use MetaModels\Attribute\ITranslated;
-use MetaModels\AttributeTranslatedContentArticleBundle\Contao\Controller\ControllerHelper;
 use MetaModels\IMetaModel;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 

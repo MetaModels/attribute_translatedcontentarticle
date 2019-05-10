@@ -20,12 +20,14 @@
 
 namespace MetaModels\AttributeTranslatedContentArticleBundle\Table;
 
+use Contao\Backend;
+
 /**
  * Class MetaModelAttributeTranslatedContentArticle.
  *
  * @package MetaModels\AttributeTranslatedContentArticleBundle\Table
  */
-class MetaModelAttributeTranslatedContentArticle extends \Contao\Backend
+class MetaModelAttributeTranslatedContentArticle extends Backend
 {
     /**
      * Main Language Content.

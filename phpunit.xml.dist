@@ -19,7 +19,8 @@
     </testsuites>
     <filter>
         <whitelist>
-            <directory>./src</directory>
+            <directory>./srcMetaModel</directory>
+            <directory>./srcContao</directory>
         </whitelist>
     </filter>
 </phpunit>

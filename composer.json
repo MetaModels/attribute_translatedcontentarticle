@@ -42,8 +42,8 @@
   },
   "autoload": {
     "psr-4": {
-      "MetaModels\\AttributeTranslatedContentArticleBundle\\": "srcMetaModel",
-      "Contao\\": "srcContao"
+      "MetaModels\\AttributeTranslatedContentArticleBundle\\": "srcMetaModel/",
+      "Contao\\": "srcContao/"
     },
     "files": [
       "srcMetaModel/deprecated-autoload.php"
@@ -55,7 +55,7 @@
       "transifex": {
         "project": "metamodels",
         "prefix": "attribute_translatedcontentarticle-",
-        "languages_cto": "src/Resources/contao/languages",
+        "languages_cto": "srcMetaModel/Resources/contao/languages",
         "languages_tx": ".tx"
       }
     },

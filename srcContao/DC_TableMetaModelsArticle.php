@@ -27,7 +27,7 @@ namespace Contao;
  *
  * @SuppressWarnings(PHPMD.CamelCaseClassName)
  */
-class DC_TableMetaModelsArticle extends \Contao\DC_Table
+class DC_TableMetaModelsArticle extends DC_Table
 {
     /**
      * Creates the parent View.
