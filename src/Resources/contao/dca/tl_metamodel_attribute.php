@@ -19,4 +19,4 @@
  */
 
 $GLOBALS['TL_DCA']['tl_metamodel_attribute']['metapalettes']['translatedcontentarticle extends _simpleattribute_'] =
-    array();
+    [];

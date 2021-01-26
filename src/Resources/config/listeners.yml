@@ -1,51 +1,32 @@
 services:
-    metamodels:
-        attribute_translatedcontentarticle.listeners.backend_listener:
-        class: MetaModels\AttributeTranslatedContentArticleBundle\EventListener\BackendEventListener
-        tags:
-            - {
-                name: kernel.event_listener,
-                event: 'dc-general.view.contao2backend.manipulate-widget',
-                method: 'setWidgetLanguage'
-            }
-            - {
-                name: kernel.event_listener,
-                event: 'dc-general.model.post-duplicate',
-                method: 'handlePostDuplicationModel'
-            }
-            - {
-                name: kernel.event_listener,
-                event: 'dc-general.model.post-paste',
-                method: 'handlePostPasteModel'
-            }
-    attribute_translatedcontentarticle.listeners.get_property_options:
-        class: MetaModels\AttributeTranslatedContentArticleBundle\EventListener\GetOptionsListener
-        arguments:
-            - '@metamodels.factory'
-        tags:
-            - {
-                name: kernel.event_listener,
-                event: 'dc-general.view.contao2backend.get-property-options',
-                method: getPropertyOptions
-            }
-    attribute_translatedcontentarticle.backend_listner.get_options:
-        class: MetaModels\AttributeTranslatedContentArticleBundle\EventListener\GetOptionsListener
-        arguments:
-            - '@metamodels.factory'
-        tags:
-            - {
-                name: kernel.event_listener,
-                event: 'men-at-work.multi-column-wizard.get-options',
-                method: getOptions
-            }
-    attribute_translatedcontentarticle.backend_listner.auth.listener:
-        class: MetaModels\AttributeTranslatedContentArticleBundle\EventListener\InitializeListener
-        arguments:
-            - "@security.token_storage"
-            - "@security.authentication.trust_resolver"
-            - "@contao.routing.scope_matcher"
-            - "@metamodels.view_combination"
-        tags:
-            -   name: kernel.event_listener
-                event: kernel.request
-                priority: -600
+  MetaModels\AttributeTranslatedContentArticleBundle\EventListener\BackendEventListener:
+    public: false
+    tags:
+      - name: kernel.event_listener,
+        event: 'dc-general.view.contao2backend.manipulate-widget',
+        method: 'setWidgetLanguage'
+      - name: kernel.event_listener,
+        event: 'dc-general.model.post-duplicate',
+        method: 'handlePostDuplicationModel'
+      - name: kernel.event_listener,
+        event: 'dc-general.model.post-paste',
+        method: 'handlePostPasteModel'
+  MetaModels\AttributeTranslatedContentArticleBundle\EventListener\GetOptionsListener:
+    public: false
+    arguments:
+      - '@metamodels.factory'
+    tags:
+      - name: kernel.event_listener,
+        event: 'dc-general.view.contao2backend.get-property-options',
+        method: getOptions
+    MetaModels\AttributeTranslatedContentArticleBundle\EventListener\InitializeListener:
+      public: false
+      arguments:
+        - "@security.token_storage"
+        - "@security.authentication.trust_resolver"
+        - "@contao.routing.scope_matcher"
+        - "@metamodels.view_combination"
+      tags:
+        - name: kernel.event_listener
+          event: kernel.request
+          priority: -600

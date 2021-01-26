@@ -27,7 +27,7 @@ namespace Contao;
  *
  * @SuppressWarnings(PHPMD.CamelCaseClassName)
  */
-class DC_TableMetaModelsContentArticle extends DC_Table
+class DC_TableMetaModelsTranslatedContentArticle extends DC_Table
 {
     /**
      * Remove some elements from the basic class.

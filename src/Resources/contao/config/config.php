@@ -22,10 +22,3 @@
 // Register backend form fields.
 $GLOBALS['BE_FFL']['MetaModelAttributeArticle'] =
     'MetaModels\\AttributeTranslatedContentArticleBundle\\Widgets\\ArticleWidget';
-
-
-// Register hooks.
-$GLOBALS['TL_HOOKS']['initializeSystem'][] = [
-    'MetaModels\\AttributeTranslatedContentArticleBundle\\Table\\ArticleContent',
-    'initializeSystem'
-];

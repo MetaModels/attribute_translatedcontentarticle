@@ -18,6 +18,8 @@
  * @filesource
  */
 
+use MetaModels\AttributeTranslatedContentArticleBundle\Table\ArticleContent;
+
 $GLOBALS['TL_DCA']['tl_content']['fields']['mm_slot'] = [
     'sql' => "varchar(255) NOT NULL default ''",
 ];
@@ -32,33 +34,40 @@ $strTable  = \Input::get('table');
 
 // Change TL_Content for the article popup
 if (\substr($strModule, 0, 10) == 'metamodel_' && $strTable == 'tl_content') {
-    $GLOBALS['TL_DCA']['tl_content']['config']['dataContainer']                         = 'TableMetaModelsArticle';
-    $GLOBALS['TL_DCA']['tl_content']['config']['ptable']                                = \Input::get('ptable');
-    $GLOBALS['TL_DCA']['tl_content']['config']['onsubmit_callback'][]                   = array(
-        'MetaModels\\AttributeTranslatedContentArticleBundle\\Table\\ArticleContent',
-        'save'
-    );
-    $GLOBALS['TL_DCA']['tl_content']['config']['onload_callback'][]                     = array(
-        'MetaModels\\AttributeTranslatedContentArticleBundle\\Table\\ArticleContent',
-        'checkPermission'
-    );
-    $GLOBALS['TL_DCA']['tl_content']['list']['operations']['toggle']['button_callback'] = array(
-        'MetaModels\\AttributeTranslatedContentArticleBundle\\Table\\ArticleContent',
-        'toggleIcon'
-    );
-    $GLOBALS['TL_DCA']['tl_content']['list']['sorting']['filter'][]                     = array(
-        'mm_slot=?',
-        \Input::get('slot')
-    );
-    $GLOBALS['TL_DCA']['tl_content']['list']['sorting']['filter'][]                     = array(
-        'mm_lang=?',
-        \Input::get('lang')
-    );
-
-    $GLOBALS['TL_DCA']['tl_content']['list']['global_operations']['addMainLangContent'] = [
-        'label'      => &$GLOBALS['TL_LANG']['tl_content']['addMainLangContent'],
-        'href'       => 'key=addMainLangContent',
-        'class'      => 'header_new',
-        'attributes' => 'onclick="Backend.getScrollOffset()"',
-    ];
+    $GLOBALS['TL_DCA']['tl_content']['config']['dataContainer']                         =
+        'TableMetaModelsTranslatedContentArticle';
+    $GLOBALS['TL_DCA']['tl_content']['config']['ptable']                                =
+        \Input::get('ptable');
+    $GLOBALS['TL_DCA']['tl_content']['config']['onsubmit_callback'][]                   =
+        [
+            ArticleContent::class,
+            'save'
+        ];
+    $GLOBALS['TL_DCA']['tl_content']['config']['onload_callback'][]                     =
+        [
+            ArticleContent::class,
+            'checkPermission'
+        ];
+    $GLOBALS['TL_DCA']['tl_content']['list']['operations']['toggle']['button_callback'] =
+        [
+            ArticleContent::class,
+            'toggleIcon'
+        ];
+    $GLOBALS['TL_DCA']['tl_content']['list']['sorting']['filter'][]                     =
+        [
+            'mm_slot=?',
+            \Input::get('slot')
+        ];
+    $GLOBALS['TL_DCA']['tl_content']['list']['sorting']['filter'][]                     =
+        [
+            'mm_lang=?',
+            \Input::get('lang')
+        ];
+    $GLOBALS['TL_DCA']['tl_content']['list']['global_operations']['addMainLangContent'] =
+        [
+            'label'      => &$GLOBALS['TL_LANG']['tl_content']['addMainLangContent'],
+            'href'       => 'key=addMainLangContent',
+            'class'      => 'header_new',
+            'attributes' => 'onclick="Backend.getScrollOffset()"',
+        ];
 }
