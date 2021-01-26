@@ -21,30 +21,32 @@
 namespace Contao;
 
 /**
- * Class DC_TableMetaModelsArticle
+ * Class DC_TableMetaModelsContentArticle
  *
  * @package Contao
  *
  * @SuppressWarnings(PHPMD.CamelCaseClassName)
  */
-class DC_TableMetaModelsArticle extends DC_Table
+class DC_TableMetaModelsContentArticle extends DC_Table
 {
     /**
-     * Creates the parent View.
+     * Remove some elements from the basic class.
      *
-     * @return null|string|string[]
+     * @inheritDoc
      */
     protected function parentView()
     {
         return preg_replace(
             [
-                // "Edit parent" Button
-                '#<div class="tl_header [^>]*>\n<div class="tl_content_right">\n<a #',
-                // Parent entry info
+                // Remove the "Edit parent" Button (see: \Contao\DC_Table::parentView).
+                '/(<div class="tl_header [^>]*>.+<div class="tl_content_right">.+)' .
+                '<a.+class="edit"[^>]+>.*?(?=<\/a>)<\/a>' .
+                '(.+<\/div>)/s',
+                // Remove the parent entry info.
                 '#<td><span class="tl_label">tstamp:</span>.*\n.*</td>#',
             ],
             [
-                '$0style="display:none" ',
+                '$1$2',
                 '<td>&nbsp;</td>',
             ],
             parent::parentView()

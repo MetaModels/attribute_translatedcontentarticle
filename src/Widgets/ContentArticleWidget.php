@@ -20,14 +20,19 @@
 
 namespace MetaModels\AttributeTranslatedContentArticleBundle\Widgets;
 
+use Contao\CoreBundle\Framework\Adapter;
+use Contao\Input;
+use Contao\System;
 use Contao\Widget;
+use ContaoCommunityAlliance\DcGeneral\Contao\Compatibility\DcCompat;
+use Doctrine\DBAL\Connection;
 
 /**
  * Class ArticleWidget
  *
  * @package MetaModels\AttributeTranslatedContentArticleBundle\Widgets
  */
-class ArticleWidget extends Widget
+class ContentArticleWidget extends Widget
 {
 
     /**
@@ -45,6 +50,20 @@ class ArticleWidget extends Widget
     protected $blnForAttribute = false;
 
     /**
+     * Template.
+     *
+     * @var string
+     */
+    protected $strTemplate = 'be_widget';
+
+    /**
+     * Flag if the current entry has an id.
+     *
+     * @var bool
+     */
+    protected $hasEmptyId = false;
+
+    /**
      * The language of the current context. If no language support is needed or not set use '-'.
      *
      * @var string
@@ -52,11 +71,41 @@ class ArticleWidget extends Widget
     protected $lang = '-';
 
     /**
-     * Template.
+     * The database connection.
      *
-     * @var string
+     * @var \Doctrine\DBAL\Connection
      */
-    protected $strTemplate = 'be_widget';
+    private $connection;
+
+    /**
+     * The contao input.
+     *
+     * @var \Contao\CoreBundle\Framework\Adapter|Input
+     */
+    private $input;
+
+    /**
+     * Check if we have an id, if not set a flag.
+     * After this check call the parent constructor.
+     *
+     * @inheritDoc
+     */
+    public function __construct(
+        $arrAttributes = null,
+        DcCompat $dcCompat = null,
+        Connection $connection = null,
+        Adapter $input = null
+    ) {
+        $this->connection = ($connection ?? System::getContainer()->get('database_connection'));
+        $this->input      = (
+            $input ?? System::getContainer()->get('contao.framework')->getAdapter(Input::class)
+        );
+
+        parent::__construct($arrAttributes);
+
+        $currentID        = $this->input->get('id');
+        $this->hasEmptyId = empty($currentID);
+    }
 
     /**
      * Generate the widget and return it as string.
@@ -73,6 +122,23 @@ class ArticleWidget extends Widget
         $currentLang = $GLOBALS['TL_LANGUAGE'];
         $this->lang  = ($currentLang) ?: '-';
 
+        if (!empty($GLOBALS['TL_LANG']['MSC']['edit'])) {
+            $edit = $GLOBALS['TL_LANG']['MSC']['edit'];
+        } else {
+            $edit = 'Edit';
+        }
+
+        // If we have no id, we get some trouble with the modal. So we disabled the button.
+        if ($this->hasEmptyId) {
+            return sprintf(
+                '<p class="tl_help tl_tip">%s</p>' .
+                '<button type="button" name="%s" class="tl_submit" disabled>%s</button>',
+                $GLOBALS['TL_LANG']['attribute_contentarticle']['missing_id'],
+                $this->name,
+                $edit
+            );
+        }
+
         $strQuery = http_build_query([
             'do'     => 'metamodel_' . $this->getRootMetaModelTable($this->strTable) ?: 'table_not_found',
             'table'  => 'tl_content',
@@ -85,16 +151,10 @@ class ArticleWidget extends Widget
             'rt'     => REQUEST_TOKEN,
         ]);
 
-        if (!empty($GLOBALS['TL_LANG']['MSC']['edit'])) {
-            $edit = $GLOBALS['TL_LANG']['MSC']['edit'];
-        } else {
-            $edit = 'Bearbeiten';
-        }
-
         return sprintf(
             '<div><p><a href="%s" class="tl_submit" onclick="%s">%s</a></p></div>',
             'contao?' . $strQuery,
-            'Backend.openModalIframe({width:768,title:\'' . $this->strLabel . '\',url:this.href});return false',
+            'Backend.openModalIframe({width:850,title:\'' . $this->strLabel . '\',url:this.href});return false',
             $edit
         );
     }
@@ -111,13 +171,12 @@ class ArticleWidget extends Widget
     private function getRootMetaModelTable($strTable)
     {
         $arrTables = [];
-        $objTables = \Database::getInstance()
-            ->execute('
-				SELECT tableName, d.renderType, d.ptable
-				FROM tl_metamodel AS m
-				JOIN tl_metamodel_dca AS d
-				ON m.id = d.pid
-			');
+        $objTables = \Database::getInstance()->execute('
+                SELECT tableName, d.renderType, d.ptable
+                FROM tl_metamodel AS m
+                JOIN tl_metamodel_dca AS d
+                ON m.id = d.pid
+            ');
 
         while ($objTables->next()) {
             $arrTables[$objTables->tableName] = [

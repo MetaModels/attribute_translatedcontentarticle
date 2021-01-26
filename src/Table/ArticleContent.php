@@ -20,6 +20,10 @@
 
 namespace MetaModels\AttributeTranslatedContentArticleBundle\Table;
 
+use Contao\Backend;
+use Contao\Input;
+use Contao\Session;
+use Contao\System;
 use Symfony\Component\HttpFoundation\Session\SessionInterface;
 
 /**
@@ -27,15 +31,18 @@ use Symfony\Component\HttpFoundation\Session\SessionInterface;
  *
  * @author Leo Feyer <https://github.com/leofeyer>
  */
-class ArticleContent extends \tl_content
+class ArticleContent
 {
     /**
-     * Import the back end user object.
+     * Return the "toggle visibility" button
+     *
+     * @return string The icon url with all information.
      */
-    public function __construct()
+    public function toggleIcon()
     {
-        parent::__construct();
-        $this->import('BackendUser', 'User');
+        $controller = new \tl_content();
+
+        return call_user_func_array([$controller, 'toggleIcon'], func_get_args());
     }
 
     /**
@@ -95,7 +102,7 @@ class ArticleContent extends \tl_content
             case 'select':
                 // Check access to the article
                 if (!$this->checkAccessToElement(CURRENT_ID, $strParentTable, true)) {
-                    $this->redirect('contao?act=error');
+                    Backend::redirect('contao?act=error');
                 }
                 break;
 
@@ -105,17 +112,21 @@ class ArticleContent extends \tl_content
             case 'cutAll':
             case 'copyAll':
                 // Check access to the parent element if a content element is moved
-                if ((\Input::get('act') == 'cutAll' ||
-                     \Input::get('act') == 'copyAll') &&
+                if ((Input::get('act') == 'cutAll' ||
+                     Input::get('act') == 'copyAll') &&
                     !$this->checkAccessToElement(\Input::get('pid'), $strParentTable)) {
                     $this->redirect('contao?act=error');
                 }
 
-                $objCes = \Database::getInstance()->prepare('SELECT id FROM tl_content WHERE ptable=? AND pid=?')
-                    ->execute($strParentTable, CURRENT_ID);
+                $objCes = \Database::getInstance()
+                                   ->prepare('SELECT id FROM tl_content WHERE ptable=? AND pid=?')
+                                    ->execute($strParentTable, CURRENT_ID);
 
-                $session                   = \Session::getInstance()->getData();
-                $session['CURRENT']['IDS'] = array_intersect($session['CURRENT']['IDS'], $objCes->fetchEach('id'));
+                $session                   = Session::getInstance()->getData();
+                $session['CURRENT']['IDS'] = array_intersect(
+                    $session['CURRENT']['IDS'],
+                    $objCes->fetchEach('id')
+                );
                 $objSession->replace($session);
                 break;
 
@@ -123,13 +134,13 @@ class ArticleContent extends \tl_content
             case 'copy':
                 // Check access to the parent element if a content element is moved
                 if (!$this->checkAccessToElement(\Input::get('pid'), $strParentTable)) {
-                    $this->redirect('contao?act=error');
+                    Backend::redirect('contao?act=error');
                 }
             // NO BREAK STATEMENT HERE
             default:
                 // Check access to the content element
                 if (!$this->checkAccessToElement(\Input::get('id'), $strParentTable)) {
-                    $this->redirect('contao?act=error');
+                    Backend::redirect('contao?act=error');
                 }
                 break;
         }
@@ -165,7 +176,7 @@ class ArticleContent extends \tl_content
 
         // Invalid ID
         if ($objContent->numRows < 1) {
-            $this->log('Invalid content element ID ' . $accessId, __METHOD__, TL_ERROR);
+            System::log('Invalid content element ID ' . $accessId, __METHOD__, TL_ERROR);
 
             return false;
         }

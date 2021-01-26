@@ -43,7 +43,6 @@ class Plugin implements BundlePluginInterface
                         MetaModelsCoreBundle::class
                     ]
                 )
-                ->setReplace(['metamodelsattribute_article'])
         ];
     }
 }

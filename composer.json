@@ -42,23 +42,12 @@
   },
   "autoload": {
     "psr-4": {
-      "MetaModels\\AttributeTranslatedContentArticleBundle\\": "srcMetaModel/",
-      "Contao\\": "srcContao/"
-    },
-    "files": [
-      "srcMetaModel/deprecated-autoload.php"
-    ]
+      "MetaModels\\AttributeTranslatedContentArticleBundle\\": "src/",
+      "Contao\\": "driver/"
+    }
   },
   "extra": {
     "contao-manager-plugin": "MetaModels\\AttributeTranslatedContentArticleBundle\\ContaoManager\\Plugin",
-    "contao": {
-      "transifex": {
-        "project": "metamodels",
-        "prefix": "attribute_translatedcontentarticle-",
-        "languages_cto": "srcMetaModel/Resources/contao/languages",
-        "languages_tx": ".tx"
-      }
-    },
     "branch-alias": {
       "dev-master": "2.1.x-dev"
     }

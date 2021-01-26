@@ -22,6 +22,7 @@
 namespace MetaModels\AttributeTranslatedContentArticleBundle\Attribute;
 
 use Contao\System;
+use MetaModels\Attribute\BaseComplex;
 use MetaModels\Attribute\BaseSimple;
 use MetaModels\Attribute\ITranslated;
 use MetaModels\IMetaModel;
@@ -75,14 +76,26 @@ class TranslatedContentArticle extends BaseSimple implements ITranslated
     }
 
     /**
-     * SearchForInLanguage
-     *
-     * @param string $strPattern
-     * @param array  $arrLanguages
-     *
-     * @return string[]
-     *
-     * @SuppressWarnings(PHPMD.UnusedFormalParameter)
+     * {@inheritdoc}
+     */
+    public function getFieldDefinition($arrOverrides = array())
+    {
+        $arrFieldDef              = parent::getFieldDefinition($arrOverrides);
+        $arrFieldDef['inputType'] = 'contentarticle';
+
+        return $arrFieldDef;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function getFilterOptions($idList, $usedOnly, &$arrCount = null)
+    {
+        // Needed to fake implement BaseComplex.
+    }
+
+    /**
+     * {@inheritdoc}
      */
     public function searchForInLanguages($strPattern, $arrLanguages = array())
     {
@@ -93,47 +106,13 @@ class TranslatedContentArticle extends BaseSimple implements ITranslated
     /**
      * {@inheritdoc}
      */
-    public function getSQLDataType()
-    {
-        return 'varchar(255) NOT NULL default \'\'';
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function getFieldDefinition($arrOverrides = array())
-    {
-        $arrFieldDef              = parent::getFieldDefinition($arrOverrides);
-        $arrFieldDef['inputType'] = 'MetaModelAttributeArticle';
-
-        return $arrFieldDef;
-    }
-
-    /**
-     * SetTranslatedDataFor.
-     *
-     * @param array  $arrValues   DataArray.
-     * @param string $strLangCode LanguageCode.
-     *
-     * @return void
-     *
-     * @SuppressWarnings(PHPMD.UnusedFormalParameter)
-     */
     public function setTranslatedDataFor($arrValues, $strLangCode)
     {
         // Needed to fake implement ITranslate.
     }
 
     /**
-     * GetTranslatedDataFor.
-     *
-     * @param $arrIds
-     * @param $strLangCode
-     *
-     * @return mixed[]
-     *
-     * @SuppressWarnings(PHPMD.CyclomaticComplexity)
-     * @SuppressWarnings(PHPMD.NPathComplexity)
+     * {@inheritdoc}
      */
     public function getTranslatedDataFor($arrIds, $strLangCode)
     {
@@ -145,8 +124,9 @@ class TranslatedContentArticle extends BaseSimple implements ITranslated
         $strTable            = $this->getMetaModel()->getTableName();
         $strColumn           = $this->getColName();
         $strLanguage         = $this->getMetaModel()->isTranslated() ? $strLangCode : '-';
-        $strFallbackLanguage = $this->getMetaModel()->isTranslated() ?
-            $this->getMetaModel()->getFallbackLanguage() : '-';
+        $strFallbackLanguage = $this->getMetaModel()->isTranslated()
+            ? $this->getMetaModel()->getFallbackLanguage()
+            : '-';
         $arrData             = [];
 
         foreach ($arrIds as $intId) {
@@ -164,9 +144,7 @@ class TranslatedContentArticle extends BaseSimple implements ITranslated
 
             if ($objContent !== null) {
                 while ($objContent->next()) {
-                    if ($objContent->mm_slot == $strColumn
-                        && $objContent->mm_lang == $strLanguage
-                    ) {
+                    if ($objContent->mm_slot == $strColumn && $objContent->mm_lang == $strLanguage) {
                         $arrContent[] = $this->getContentElement($objContent->current());
                     } elseif ($objContent->mm_slot == $strColumn
                               && $strLanguage != $strFallbackLanguage
@@ -192,25 +170,10 @@ class TranslatedContentArticle extends BaseSimple implements ITranslated
     }
 
     /**
-     * UnsetValueFor - Needed to fake implement ITranslate.
-     *
-     * @param $arrIds
-     * @param $strLangCode
-     *
-     * @return void
-     *
-     * @SuppressWarnings(PHPMD.UnusedFormalParameter)
+     * {@inheritdoc}
      */
     public function unsetValueFor($arrIds, $strLangCode)
     {
         // Needed to fake implement ITranslate.
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    private function getContentElement($objContent)
-    {
-        return \Controller::getContentElement($objContent);
     }
 }

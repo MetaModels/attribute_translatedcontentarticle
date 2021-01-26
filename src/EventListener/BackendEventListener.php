@@ -39,28 +39,6 @@ class BackendEventListener
     private $intDuplicationSourceId;
 
     /**
-     * Set the language for the widget.
-     *
-     * @param ManipulateWidgetEvent $event The event.
-     *
-     * @return void
-     */
-    public function setWidgetLanguage(ManipulateWidgetEvent $event)
-    {
-
-        if ($event->getWidget()->type != 'article') {
-            return;
-        }
-
-        /** @var Driver $dataProvider */
-        $dataProvider = $event->getEnvironment()->getDataProvider($event->getModel()->getProviderName());
-        $language     = $dataProvider->getCurrentLanguage() ?: '-';
-
-        $event->getWidget()->lang = $language;
-    }
-
-
-    /**
      * Handle Post Duplication Model.
      *
      * @param PostDuplicateModelEvent $event The event.
@@ -86,7 +64,6 @@ class BackendEventListener
         }
     }
 
-
     /**
      * HandlePostPasteModel Event Listener.
      *
@@ -110,7 +87,6 @@ class BackendEventListener
         $this->duplicateContentEntries($strTable, $intSourceId, $intDestinationId);
     }
 
-
     /**
      * Duplicate the content entries.
      *
@@ -125,8 +101,8 @@ class BackendEventListener
     private function duplicateContentEntries($strTable, $intSourceId, $intDestinationId)
     {
         $objContent = \Database::getInstance()
-            ->prepare('SELECT * FROM tl_content WHERE pid=? AND ptable=?')
-            ->execute($intSourceId, $strTable);
+                               ->prepare('SELECT * FROM tl_content WHERE pid=? AND ptable=?')
+                               ->execute($intSourceId, $strTable);
 
         while ($objContent->next()) {
             $arrContent        = $objContent->row();
@@ -134,9 +110,29 @@ class BackendEventListener
             unset($arrContent['id']);
 
             \Database::getInstance()
-                ->prepare('INSERT INTO tl_content %s')
-                ->set($arrContent)
-                ->execute();
+                     ->prepare('INSERT INTO tl_content %s')
+                     ->set($arrContent)
+                     ->execute();
         }
+    }
+
+    /**
+     * Set the language for the widget.
+     *
+     * @param ManipulateWidgetEvent $event The event.
+     *
+     * @return void
+     */
+    public function setWidgetLanguage(ManipulateWidgetEvent $event)
+    {
+        if ($event->getWidget()->type != 'article') {
+            return;
+        }
+
+        /** @var Driver $dataProvider */
+        $dataProvider = $event->getEnvironment()->getDataProvider($event->getModel()->getProviderName());
+        $language     = $dataProvider->getCurrentLanguage() ?: '-';
+
+        $event->getWidget()->lang = $language;
     }
 }
