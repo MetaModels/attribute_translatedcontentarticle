@@ -109,7 +109,7 @@ class InitializeListener
                 $localMenu['content'][$strModule]['tables'][]           = 'tl_content';
                 $localMenu['content'][$strModule]['callback']           = null;
                 $localMenu['content'][$strModule]['addMainLangContent'] = [
-                    'MetaModels\\AttributeTranslatedContentArticleBundle\\Table\\MetaModelAttributeTranslatedContentArticle',
+                    'MetaModels\\AttributeTranslatedContentArticleBundle\\Table\\ArticleContent',
                     'addMainLangContent'
                 ];
             }

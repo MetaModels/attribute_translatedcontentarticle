@@ -183,4 +183,53 @@ class ArticleContent
 
         return true;
     }
+
+    /**
+     * Main Language Content.
+     *
+     * @param \DataContainer $dataContainer The DC Driver.
+     *
+     * @return void
+     */
+    public function addMainLangContent($dataContainer)
+    {
+        $factory = \System::getContainer()->get('metamodels.factory');
+        /** @var \MetaModels\IFactory $factory */
+        $objMetaModel = $factory->getMetaModel($dataContainer->parentTable);
+
+        $intId           = $dataContainer->id;
+        $strParentTable  = $dataContainer->parentTable;
+        $strSlot         = \Input::get('slot');
+        $strLanguage     = \Input::get('lang');
+        $strMainLanguage = $objMetaModel->getFallbackLanguage();
+
+        // To DO Message::addError übersetzen
+        if ($strLanguage == $strMainLanguage) {
+            \Message::addError('Hauptsprache kann nicht in die Hauptsprache kopiert werden.');
+            \Controller::redirect(\System::getReferer());
+
+            return;
+        }
+
+        $objContent = \Database::getInstance()
+                               ->prepare('SELECT * FROM tl_content WHERE pid=? AND ptable=? AND mm_slot=? AND mm_lang=?')
+                               ->execute($intId, $strParentTable, $strSlot, $strMainLanguage);
+
+        $counter = 0;
+        while ($objContent->next()) {
+            $arrContent            = $objContent->row();
+            $arrContent['mm_lang'] = $strLanguage;
+            unset($arrContent['id']);
+
+            \Database::getInstance()
+                     ->prepare('INSERT INTO tl_content %s')
+                     ->set($arrContent)
+                     ->execute();
+            $counter++;
+        }
+
+        // TO DO Message::addError übersetzen
+        \Message::addInfo(sprintf('%s Element(e) kopiert', $counter));
+        \Controller::redirect(\System::getReferer());
+    }
 }

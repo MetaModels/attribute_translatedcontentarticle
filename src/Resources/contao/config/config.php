@@ -26,6 +26,6 @@ $GLOBALS['BE_FFL']['MetaModelAttributeArticle'] =
 
 // Register hooks.
 $GLOBALS['TL_HOOKS']['initializeSystem'][] = [
-    'MetaModels\\AttributeTranslatedContentArticleBundle\\Table\\MetaModelAttributeTranslatedContentArticle',
+    'MetaModels\\AttributeTranslatedContentArticleBundle\\Table\\ArticleContent',
     'initializeSystem'
 ];
