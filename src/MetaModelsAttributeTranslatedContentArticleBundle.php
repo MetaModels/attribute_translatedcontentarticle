@@ -25,7 +25,7 @@ use Symfony\Component\HttpKernel\Bundle\Bundle;
 /**
  * The Bundle class.
  */
-class AttributeTranslatedContentArticleBundle extends Bundle
+class MetaModelsAttributeTranslatedContentArticleBundle extends Bundle
 {
 
 }

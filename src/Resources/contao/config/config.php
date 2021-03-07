@@ -20,5 +20,6 @@
 
 
 // Register backend form fields.
-$GLOBALS['BE_FFL']['MetaModelAttributeArticle'] =
-    'MetaModels\\AttributeTranslatedContentArticleBundle\\Widgets\\ArticleWidget';
+use MetaModels\AttributeTranslatedContentArticleBundle\Widgets\ContentArticleWidget;
+
+$GLOBALS['BE_FFL']['translatedcontentarticle'] = ContentArticleWidget::class;

@@ -21,6 +21,7 @@
 namespace MetaModels\AttributeTranslatedContentArticleBundle\Table;
 
 use Contao\Backend;
+use Contao\BackendUser;
 use Contao\Input;
 use Contao\Session;
 use Contao\System;
@@ -54,9 +55,14 @@ class ArticleContent
      */
     public function save(\DataContainer $dataContainer)
     {
+        $lang = \Input::get('lang');
+        if (empty($lang)) {
+            $lang = '';
+        }
+
         \Database::getInstance()
-            ->prepare('UPDATE tl_content SET mm_slot=?, mm_lang=? WHERE id=?')
-            ->execute(\Input::get('slot'), \Input::get('lang'), $dataContainer->id);
+                 ->prepare('UPDATE tl_content SET mm_slot=?, mm_lang=? WHERE id=?')
+                 ->execute(\Input::get('slot'), $lang, $dataContainer->id);
     }
 
     /**
@@ -74,18 +80,18 @@ class ArticleContent
         // Prevent deleting referenced elements (see #4898)
         if (\Input::get('act') == 'deleteAll') {
             $objCes = \Database::getInstance()
-                ->prepare("SELECT cteAlias 
+                               ->prepare("SELECT cteAlias 
                                     FROM tl_content 
                                     WHERE (ptable='tl_article' OR ptable='') 
                                       AND type='alias'")
-                ->execute();
+                               ->execute();
 
             $session                   = $objSession->all();
             $session['CURRENT']['IDS'] = array_diff($session['CURRENT']['IDS'], $objCes->fetchEach('cteAlias'));
             $objSession->replace($session);
         }
 
-        if ($this->User->isAdmin) {
+        if (BackendUser::getInstance()->isAdmin) {
             return;
         }
 
@@ -113,14 +119,14 @@ class ArticleContent
             case 'copyAll':
                 // Check access to the parent element if a content element is moved
                 if ((Input::get('act') == 'cutAll' ||
-                     Input::get('act') == 'copyAll') &&
+                        Input::get('act') == 'copyAll') &&
                     !$this->checkAccessToElement(\Input::get('pid'), $strParentTable)) {
                     $this->redirect('contao?act=error');
                 }
 
                 $objCes = \Database::getInstance()
                                    ->prepare('SELECT id FROM tl_content WHERE ptable=? AND pid=?')
-                                    ->execute($strParentTable, CURRENT_ID);
+                                   ->execute($strParentTable, CURRENT_ID);
 
                 $session                   = Session::getInstance()->getData();
                 $session['CURRENT']['IDS'] = array_intersect(
@@ -163,14 +169,14 @@ class ArticleContent
         if ($strScript != 'contao/page.php' && $strScript != 'contao/file.php') {
             if ($blnIsPid) {
                 $objContent = \Database::getInstance()
-                    ->prepare('SELECT 1 FROM `$ptable` WHERE id=?')
-                    ->limit(1)
-                    ->execute($accessId);
+                                       ->prepare('SELECT 1 FROM `$ptable` WHERE id=?')
+                                       ->limit(1)
+                                       ->execute($accessId);
             } else {
                 $objContent = \Database::getInstance()
-                    ->prepare('SELECT 1 FROM tl_content WHERE id=? AND ptable=?')
-                    ->limit(1)
-                    ->execute($accessId, $ptable);
+                                       ->prepare('SELECT 1 FROM tl_content WHERE id=? AND ptable=?')
+                                       ->limit(1)
+                                       ->execute($accessId, $ptable);
             }
         }
 

@@ -22,16 +22,14 @@
 namespace MetaModels\AttributeTranslatedContentArticleBundle\Attribute;
 
 use Contao\System;
-use MetaModels\Attribute\BaseComplex;
-use MetaModels\Attribute\BaseSimple;
-use MetaModels\Attribute\ITranslated;
+use MetaModels\Attribute\TranslatedReference;
 use MetaModels\IMetaModel;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 /**
  * This is the AttributeTranslatedContentArticle class for handling article fields.
  */
-class TranslatedContentArticle extends BaseSimple implements ITranslated
+class TranslatedContentArticle extends TranslatedReference
 {
 
     /**
@@ -78,10 +76,19 @@ class TranslatedContentArticle extends BaseSimple implements ITranslated
     /**
      * {@inheritdoc}
      */
+    protected function getValueTable()
+    {
+        // Needed to fake implement ITranslate.
+        return '';
+    }
+
+    /**
+     * {@inheritdoc}
+     */
     public function getFieldDefinition($arrOverrides = array())
     {
         $arrFieldDef              = parent::getFieldDefinition($arrOverrides);
-        $arrFieldDef['inputType'] = 'contentarticle';
+        $arrFieldDef['inputType'] = 'translatedcontentarticle';
 
         return $arrFieldDef;
     }
@@ -93,6 +100,23 @@ class TranslatedContentArticle extends BaseSimple implements ITranslated
     {
         // Needed to fake implement BaseComplex.
     }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function unsetDataFor($arrIds)
+    {
+        // Needed to fake implement BaseComplex.
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function unsetValueFor($arrIds, $strLangCode)
+    {
+        // Needed to fake implement ITranslate.
+    }
+
 
     /**
      * {@inheritdoc}
@@ -147,8 +171,8 @@ class TranslatedContentArticle extends BaseSimple implements ITranslated
                     if ($objContent->mm_slot == $strColumn && $objContent->mm_lang == $strLanguage) {
                         $arrContent[] = $this->getContentElement($objContent->current());
                     } elseif ($objContent->mm_slot == $strColumn
-                              && $strLanguage != $strFallbackLanguage
-                              && $objContent->mm_lang == $strFallbackLanguage
+                        && $strLanguage != $strFallbackLanguage
+                        && $objContent->mm_lang == $strFallbackLanguage
                     ) {
                         $arrContentFallback[] = $this->getContentElement($objContent->current());
                     }
@@ -169,11 +193,5 @@ class TranslatedContentArticle extends BaseSimple implements ITranslated
         return $arrData;
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    public function unsetValueFor($arrIds, $strLangCode)
-    {
-        // Needed to fake implement ITranslate.
-    }
+
 }

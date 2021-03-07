@@ -23,7 +23,8 @@ namespace MetaModels\AttributeTranslatedContentArticleBundle\ContaoManager;
 use Contao\ManagerPlugin\Bundle\BundlePluginInterface;
 use Contao\ManagerPlugin\Bundle\Config\BundleConfig;
 use Contao\ManagerPlugin\Bundle\Parser\ParserInterface;
-use MetaModels\AttributeTranslatedContentArticleBundle\AttributeTranslatedContentArticleBundle;
+use MetaModels\AttributeContentArticleBundle\MetaModelsAttributeContentArticleBundle;
+use MetaModels\AttributeTranslatedContentArticleBundle\MetaModelsAttributeTranslatedContentArticleBundle;
 use MetaModels\CoreBundle\MetaModelsCoreBundle;
 
 /**
@@ -37,12 +38,14 @@ class Plugin implements BundlePluginInterface
     public function getBundles(ParserInterface $parser)
     {
         return [
-            BundleConfig::create(AttributeTranslatedContentArticleBundle::class)
+            BundleConfig::create(MetaModelsAttributeTranslatedContentArticleBundle::class)
                 ->setLoadAfter(
                     [
-                        MetaModelsCoreBundle::class
+                        MetaModelsCoreBundle::class,
+                        MetaModelsAttributeContentArticleBundle::class
                     ]
                 )
+                ->setReplace(['metamodelsattribute_translatedarticle'])
         ];
     }
 }

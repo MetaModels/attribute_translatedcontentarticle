@@ -25,6 +25,7 @@ use Contao\Input;
 use Contao\System;
 use Contao\Widget;
 use ContaoCommunityAlliance\DcGeneral\Contao\Compatibility\DcCompat;
+use ContaoCommunityAlliance\DcGeneral\Data\MultiLanguageDataProviderInterface;
 use Doctrine\DBAL\Connection;
 
 /**
@@ -85,6 +86,11 @@ class ContentArticleWidget extends Widget
     private $input;
 
     /**
+     * @var \ContaoCommunityAlliance\DcGeneral\Contao\Compatibility\DcCompat|null
+     */
+    private $dcCompat;
+
+    /**
      * Check if we have an id, if not set a flag.
      * After this check call the parent constructor.
      *
@@ -96,6 +102,7 @@ class ContentArticleWidget extends Widget
         Connection $connection = null,
         Adapter $input = null
     ) {
+        $this->dcCompat   = $dcCompat;
         $this->connection = ($connection ?? System::getContainer()->get('database_connection'));
         $this->input      = (
             $input ?? System::getContainer()->get('contao.framework')->getAdapter(Input::class)
@@ -119,8 +126,14 @@ class ContentArticleWidget extends Widget
     public function generate()
     {
         // Update the language.
-        $currentLang = $GLOBALS['TL_LANGUAGE'];
-        $this->lang  = ($currentLang) ?: '-';
+        /** @var \MetaModels\DcGeneral\Data\Driver $dataProvider */
+        $dataProvider = $this->dcCompat->getEnvironment()->getDataProvider();
+        if ($dataProvider instanceof MultiLanguageDataProviderInterface){
+            $currentLang = $dataProvider->getCurrentLanguage();
+        } else {
+            $currentLang = null;
+        }
+        $this->lang = ($currentLang) ?: '-';
 
         if (!empty($GLOBALS['TL_LANG']['MSC']['edit'])) {
             $edit = $GLOBALS['TL_LANG']['MSC']['edit'];
@@ -140,15 +153,16 @@ class ContentArticleWidget extends Widget
         }
 
         $strQuery = http_build_query([
-            'do'     => 'metamodel_' . $this->getRootMetaModelTable($this->strTable) ?: 'table_not_found',
-            'table'  => 'tl_content',
-            'ptable' => $this->strTable,
-            'id'     => $this->currentRecord,
-            'slot'   => $this->strName,
-            'lang'   => $this->lang,
-            'popup'  => 1,
-            'nb'     => 1,
-            'rt'     => REQUEST_TOKEN,
+            'do'          => 'metamodel_' . $this->getRootMetaModelTable($this->strTable) ?: 'table_not_found',
+            'table'       => 'tl_content',
+            'ptable'      => $this->strTable,
+            'id'          => $this->currentRecord,
+            'slot'        => $this->strName,
+            'lang'        => $this->lang,
+            'popup'       => 1,
+            'nb'          => 1,
+            'langSupport' => 1,
+            'rt'          => REQUEST_TOKEN,
         ]);
 
         return sprintf(

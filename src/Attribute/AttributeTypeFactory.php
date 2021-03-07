@@ -20,13 +20,16 @@
 
 namespace MetaModels\AttributeTranslatedContentArticleBundle\Attribute;
 
+use Doctrine\DBAL\Connection;
 use MetaModels\Attribute\AbstractAttributeTypeFactory;
+use MetaModels\Attribute\AbstractSimpleAttributeTypeFactory;
+use MetaModels\Helper\TableManipulator;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 /**
  * Attribute type factory for article attributes.
  */
-class AttributeTypeFactory extends AbstractAttributeTypeFactory
+class AttributeTypeFactory extends AbstractSimpleAttributeTypeFactory
 {
     /**
      * Event dispatcher.
@@ -38,9 +41,12 @@ class AttributeTypeFactory extends AbstractAttributeTypeFactory
     /**
      * {@inheritDoc}
      */
-    public function __construct(EventDispatcherInterface $eventDispatcher)
-    {
-        parent::__construct();
+    public function __construct(
+        EventDispatcherInterface $eventDispatcher,
+        Connection $connection,
+        TableManipulator $tableManipulator
+    ) {
+        parent::__construct($connection, $tableManipulator);
 
         $this->typeName        = 'translatedcontentarticle';
         $this->typeIcon        = 'bundles/metamodelsattributtranslatedcontentearticle/article.png';

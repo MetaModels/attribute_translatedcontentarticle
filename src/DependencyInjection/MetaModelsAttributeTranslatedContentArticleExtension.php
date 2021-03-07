@@ -27,6 +27,8 @@ use Symfony\Component\DependencyInjection\Loader;
 
 /**
  * This is the class that loads and manages the bundle configuration
+ *
+ * @SuppressWarnings(PHPMD.LongClassName)
  */
 class MetaModelsAttributeTranslatedContentArticleExtension extends Extension
 {

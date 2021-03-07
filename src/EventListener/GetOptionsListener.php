@@ -21,7 +21,7 @@
 namespace MetaModels\AttributeTranslatedContentArticleBundle\EventListener;
 
 use MetaModels\IFactory;
-use \MenAtWork\MultiColumnWizardBundle\Event\GetOptionsEvent;
+use ContaoCommunityAlliance\DcGeneral\Contao\View\Contao2BackendView\Event\GetPropertyOptionsEvent;
 
 /**
  * Handle events for tl_metamodel_attribute.
@@ -48,11 +48,11 @@ class GetOptionsListener
     /**
      * Retrieve the options for the attributes.
      *
-     * @param GetOptionsEvent $event The event.
+     * @param GetPropertyOptionsEvent $event The event.
      *
      * @return void
      */
-    public function getOptions(GetOptionsEvent $event)
+    public function getOptions(GetPropertyOptionsEvent $event)
     {
         // Nothing to do.
     }
