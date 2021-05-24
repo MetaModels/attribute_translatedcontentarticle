@@ -21,6 +21,7 @@
 
 namespace MetaModels\AttributeTranslatedContentArticleBundle\Attribute;
 
+use Contao\Controller;
 use Contao\System;
 use MetaModels\Attribute\TranslatedReference;
 use MetaModels\IMetaModel;
@@ -169,12 +170,12 @@ class TranslatedContentArticle extends TranslatedReference
             if ($objContent !== null) {
                 while ($objContent->next()) {
                     if ($objContent->mm_slot == $strColumn && $objContent->mm_lang == $strLanguage) {
-                        $arrContent[] = $this->getContentElement($objContent->current());
+                        $arrContent[] = Controller::getContentElement($objContent->current());
                     } elseif ($objContent->mm_slot == $strColumn
                         && $strLanguage != $strFallbackLanguage
                         && $objContent->mm_lang == $strFallbackLanguage
                     ) {
-                        $arrContentFallback[] = $this->getContentElement($objContent->current());
+                        $arrContentFallback[] = Controller::getContentElement($objContent->current());
                     }
                 }
             }
