@@ -36,6 +36,9 @@ class DC_TableMetaModelsTranslatedContentArticle extends DC_Table
      */
     protected function parentView()
     {
+		// Workaround!
+		return parent::parentView();
+		
         return preg_replace(
             [
                 // Remove the "Edit parent" Button (see: \Contao\DC_Table::parentView).
