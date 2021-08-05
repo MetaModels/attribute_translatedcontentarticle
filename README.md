@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/MetaModels/attribute_translatedcontentarticle.svg)](https://travis-ci.org/MetaModels/attribute_translatedcontentarticle)
+[![Build Status](https://github.com/MetaModels/attribute_translatedcontentarticle/actions/workflows/diagnostics.yml/badge.svg)](https://github.com/MetaModels/attribute_translatedcontentarticle/actions)
 [![Latest Version tagged](http://img.shields.io/github/tag/MetaModels/attribute_translatedcontentarticle.svg)](https://github.com/MetaModels/attribute_translatedcontentarticle/tags)
 [![Latest Version on Packagist](http://img.shields.io/packagist/v/MetaModels/attribute_translatedcontentarticle.svg)](https://packagist.org/packages/MetaModels/attribute_translatedcontentarticle)
 [![Installations via composer per month](http://img.shields.io/packagist/dm/MetaModels/attribute_translatedcontentarticle.svg)](https://packagist.org/packages/MetaModels/attribute_translatedcontentarticle)
