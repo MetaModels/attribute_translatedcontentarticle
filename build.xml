@@ -6,4 +6,5 @@
 -->
 <project name="metamodels/attribute-translatedcontentarticle" default="build">
     <import file="vendor/phpcq/phpcq/phpcq.main.xml"/>
+    <target name="phpspec" />
 </project>
