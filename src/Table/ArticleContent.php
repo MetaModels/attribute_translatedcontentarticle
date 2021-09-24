@@ -3,7 +3,7 @@
 /**
  * This file is part of MetaModels/attribute_translatedcontentarticle.
  *
- * (c) 2012-2019 The MetaModels team.
+ * (c) 2012-2021 The MetaModels team.
  *
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
@@ -13,7 +13,8 @@
  * @package    MetaModels
  * @subpackage AttributeTranslatedContentArticle
  * @author     Andreas Dziemba <adziemba@web.de>
- * @copyright  2012-2019 The MetaModels team.
+ * @author     Ingolf Steinhardt <info@e-spin.de>
+ * @copyright  2012-2021 The MetaModels team.
  * @license    https://github.com/MetaModels/attribute_translatedcontentarticle/blob/master/LICENSE LGPL-3.0-or-later
  * @filesource
  */
@@ -74,11 +75,49 @@ class ArticleContent
      *
      * @return void
      */
-    public function updateCopyAndCutData(string $insertId, DataContainer $dataContainer)
+    public function updateCopyData(string $insertId, DataContainer $dataContainer)
     {
-        $pid    = Input::get('id');
+        $pid    = Input::get('mid');
         $ptable = Input::get('ptable');
         $slot   = Input::get('slot');
+
+        if (empty($pid) || empty($ptable) || empty($slot)) {
+            $errorCode = 'Could not update row because one of the data are missing. ';
+            $errorCode .= 'Insert ID: %s, Pid: %s, Parent table: %s, Slot: %s';
+            throw new \RuntimeException(
+                \sprintf(
+                    $errorCode,
+                    $insertId,
+                    $pid,
+                    $ptable,
+                    $slot
+                )
+            );
+        }
+
+        Database::getInstance()
+            ->prepare('UPDATE tl_content SET pid=?, ptable=?, mm_slot=? WHERE id=?')
+            ->execute(
+                $pid,
+                $ptable,
+                $slot,
+                $insertId
+            );
+    }
+
+    /**
+     * Update the data from copies and set the context like pid, parent table, slot.
+     *
+     * @param DataContainer $dataContainer The DC Driver.
+     *
+     * @return void
+     */
+    public function updateCutData(DataContainer $dataContainer)
+    {
+        $pid      = Input::get('mid');
+        $ptable   = Input::get('ptable');
+        $slot     = Input::get('slot');
+        $insertId = $dataContainer->id;
 
         if (empty($pid) || empty($ptable) || empty($slot)) {
             $errorCode = 'Could not update row because one of the data are missing. ';
