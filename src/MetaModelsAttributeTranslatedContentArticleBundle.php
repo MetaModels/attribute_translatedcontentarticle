@@ -13,6 +13,7 @@
  * @package    MetaModels
  * @subpackage AttributeTranslatedContentArticle
  * @author     Andreas Dziemba <adziemba@web.de>
+ * @author     Stefan Heimes <stefan_heimes@hotmail.com>
  * @copyright  2012-2019 The MetaModels team.
  * @license    https://github.com/MetaModels/attribute_translatedcontentarticle/blob/master/LICENSE LGPL-3.0-or-later
  * @filesource
@@ -24,6 +25,8 @@ use Symfony\Component\HttpKernel\Bundle\Bundle;
 
 /**
  * The Bundle class.
+ *
+ * @SuppressWarnings(PHPMD)
  */
 class MetaModelsAttributeTranslatedContentArticleBundle extends Bundle
 {

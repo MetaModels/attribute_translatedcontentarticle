@@ -42,8 +42,7 @@
   },
   "autoload": {
     "psr-4": {
-      "MetaModels\\AttributeTranslatedContentArticleBundle\\": "src/",
-      "Contao\\": "driver/"
+      "MetaModels\\AttributeTranslatedContentArticleBundle\\": "src/"
     }
   },
   "extra": {

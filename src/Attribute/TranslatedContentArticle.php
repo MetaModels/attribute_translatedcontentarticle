@@ -13,6 +13,8 @@
  * @package    MetaModels
  * @subpackage AttributeTranslatedContentArticle
  * @author     Andreas Dziemba <adziemba@web.de>
+ * @author     Stefan Heimes <stefan_heimes@hotmail.com>
+ * @author     Marc Reimann <reimann@mediendepot-ruhr.de>
  * @copyright  2012-2019 The MetaModels team.
  * @license    https://github.com/MetaModels/attribute_translatedcontentarticle/blob/master/LICENSE LGPL-3.0-or-later
  * @filesource
@@ -138,6 +140,8 @@ class TranslatedContentArticle extends TranslatedReference
 
     /**
      * {@inheritdoc}
+     *
+     * @SuppressWarnings(PHPMD)
      */
     public function getTranslatedDataFor($arrIds, $strLangCode)
     {
@@ -193,6 +197,4 @@ class TranslatedContentArticle extends TranslatedReference
 
         return $arrData;
     }
-
-
 }
