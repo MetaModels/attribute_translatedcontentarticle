@@ -17,10 +17,4 @@
             <directory>./tests</directory>
         </testsuite>
     </testsuites>
-    <filter>
-        <whitelist>
-            <directory>./srcMetaModel</directory>
-            <directory>./srcContao</directory>
-        </whitelist>
-    </filter>
 </phpunit>

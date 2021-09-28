@@ -13,6 +13,7 @@
  * @package    MetaModels
  * @subpackage AttributeTranslatedContentArticle
  * @author     Andreas Dziemba <adziemba@web.de>
+ * @author     Stefan Heimes <stefan_heimes@hotmail.com>
  * @author     Ingolf Steinhardt <info@e-spin.de>
  * @copyright  2012-2021 The MetaModels team.
  * @license    https://github.com/MetaModels/attribute_translatedcontentarticle/blob/master/LICENSE LGPL-3.0-or-later
