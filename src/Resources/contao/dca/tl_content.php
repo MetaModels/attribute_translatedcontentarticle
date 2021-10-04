@@ -74,11 +74,4 @@ if (\substr($strModule, 0, 10) == 'metamodel_' && $strTable == 'tl_content' && $
             'mm_lang=?',
             Input::get('lang')
         ];
-    $GLOBALS['TL_DCA']['tl_content']['list']['global_operations']['addMainLangContent'] =
-        [
-            'label'      => &$GLOBALS['TL_LANG']['tl_content']['addMainLangContent'],
-            'href'       => 'key=addMainLangContent',
-            'class'      => 'header_new',
-            'attributes' => 'onclick="Backend.getScrollOffset()"',
-        ];
 }
