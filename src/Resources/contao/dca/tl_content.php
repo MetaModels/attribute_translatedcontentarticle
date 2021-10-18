@@ -3,7 +3,7 @@
 /**
  * This file is part of MetaModels/attribute_translatedcontentarticle.
  *
- * (c) 2012-2019 The MetaModels team.
+ * (c) 2012-2021 The MetaModels team.
  *
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
@@ -13,7 +13,9 @@
  * @package    MetaModels
  * @subpackage AttributeTranslatedContentArticle
  * @author     Andreas Dziemba <adziemba@web.de>
- * @copyright  2012-2019 The MetaModels team.
+ * @author     Ingolf Steinhardt <info@e-spin.de>
+ * @author     Stefan Heimes <stefan_heimes@hotmail.com>
+ * @copyright  2012-2021 The MetaModels team.
  * @license    https://github.com/MetaModels/attribute_translatedcontentarticle/blob/master/LICENSE LGPL-3.0-or-later
  * @filesource
  */
@@ -34,13 +36,7 @@ $strTable       = Input::get('table');
 $strLangSupport = Input::get('langSupport');
 
 // Change TL_Content for the article popup
-if (
-    \substr($strModule, 0, 10) == 'metamodel_'
-    && $strTable == 'tl_content'
-    && $strLangSupport == '1'
-) {
-    $GLOBALS['TL_DCA']['tl_content']['config']['dataContainer']                         =
-        'TableMetaModelsTranslatedContentArticle';
+if (\substr($strModule, 0, 10) == 'metamodel_' && $strTable == 'tl_content' && $strLangSupport == '1') {
     $GLOBALS['TL_DCA']['tl_content']['config']['ptable']                                =
         Input::get('ptable');
     $GLOBALS['TL_DCA']['tl_content']['config']['onsubmit_callback'][]                   =
@@ -52,6 +48,16 @@ if (
         [
             ArticleContent::class,
             'checkPermission'
+        ];
+    $GLOBALS['TL_DCA']['tl_content']['config']['oncopy_callback'][]                     =
+        [
+            ArticleContent::class,
+            'updateCopyData'
+        ];
+    $GLOBALS['TL_DCA']['tl_content']['config']['oncut_callback'][]                      =
+        [
+            ArticleContent::class,
+            'updateCutData'
         ];
     $GLOBALS['TL_DCA']['tl_content']['list']['operations']['toggle']['button_callback'] =
         [
@@ -67,12 +73,5 @@ if (
         [
             'mm_lang=?',
             Input::get('lang')
-        ];
-    $GLOBALS['TL_DCA']['tl_content']['list']['global_operations']['addMainLangContent'] =
-        [
-            'label'      => &$GLOBALS['TL_LANG']['tl_content']['addMainLangContent'],
-            'href'       => 'key=addMainLangContent',
-            'class'      => 'header_new',
-            'attributes' => 'onclick="Backend.getScrollOffset()"',
         ];
 }
