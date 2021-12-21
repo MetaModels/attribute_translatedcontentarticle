@@ -15,6 +15,7 @@
  * @author     Andreas Dziemba <adziemba@web.de>
  * @author     Ingolf Steinhardt <info@e-spin.de>
  * @author     Stefan Heimes <stefan_heimes@hotmail.com>
+ * @author     Marc Reimann <reimann@mediendepot-ruhr.de>
  * @copyright  2012-2021 The MetaModels team.
  * @license    https://github.com/MetaModels/attribute_translatedcontentarticle/blob/master/LICENSE LGPL-3.0-or-later
  * @filesource
@@ -267,7 +268,7 @@ class ArticleContent
         if ($strScript != 'contao/page.php' && $strScript != 'contao/file.php') {
             if ($blnIsPid) {
                 $objContent = Database::getInstance()
-                                      ->prepare('SELECT 1 FROM `$ptable` WHERE id=?')
+                                      ->prepare('SELECT 1 FROM `' . $ptable . '` WHERE id=?')
                                       ->limit(1)
                                       ->execute($accessId);
             } else {
