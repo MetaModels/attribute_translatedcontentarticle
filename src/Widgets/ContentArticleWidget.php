@@ -301,14 +301,13 @@ class ContentArticleWidget extends AbstractWidget
     /**
      * Retrieve all content elements of this item as parent.
      *
-     * @param int         $recordId   The record id.
+     * @param int|null    $recordId   The record id.
      * @param string      $ptableName The name of parent table.
      * @param string|null $currentLang
      *
      * @return array Returns array with content elements.
-     *
      */
-    private function getContentTypesByRecordId(int $recordId, string $ptableName, ?string $currentLang): array
+    private function getContentTypesByRecordId(?int $recordId, string $ptableName, ?string $currentLang): array
     {
         $contentElements = [];
 
