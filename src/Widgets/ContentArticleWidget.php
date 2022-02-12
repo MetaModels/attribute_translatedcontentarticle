@@ -204,7 +204,7 @@ class ContentArticleWidget extends AbstractWidget
     public function generate()
     {
         // Retrieve current language.
-        $currentLang = null;
+        $currentLang = '';
         if (Environment::get('isAjaxRequest')) {
             $currentLang = Input::post('lang');
         } else {
@@ -213,7 +213,6 @@ class ContentArticleWidget extends AbstractWidget
                 $currentLang = $dataProvider->getCurrentLanguage();
             }
         }
-        $this->lang = ($currentLang) ?: '-';
 
         $rootTable = $this->getRootMetaModelTable($this->strTable);
 
@@ -224,7 +223,7 @@ class ContentArticleWidget extends AbstractWidget
                                          'id'          => $this->currentRecord,
                                          'mid'         => $this->currentRecord,
                                          'slot'        => $this->strName,
-                                         'lang'        => $this->lang,
+                                         'lang'        => $currentLang,
                                          'popup'       => 1,
                                          'nb'          => 1,
                                          'langSupport' => 1,
@@ -242,7 +241,7 @@ class ContentArticleWidget extends AbstractWidget
             ->set('hasEmptyId', $this->hasEmptyId)
             ->set('link', 'contao?' . $strQuery)
             ->set('elements', $contentElements)
-            ->set('lang', $this->lang)
+            ->set('lang', $currentLang)
             ->parse();
 
         return !Environment::get('isAjaxRequest') ? '<div>' . $content . '</div>' : $content;
