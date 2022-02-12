@@ -26,7 +26,6 @@ use Contao\CoreBundle\Framework\Adapter;
 use Contao\Environment;
 use Contao\Input;
 use Contao\System;
-use Contao\Widget;
 use ContaoCommunityAlliance\DcGeneral\Contao\Compatibility\DcCompat;
 use ContaoCommunityAlliance\DcGeneral\Contao\View\Contao2BackendView\ContaoBackendViewTemplate;
 use ContaoCommunityAlliance\DcGeneral\Contao\View\Contao2BackendView\Widget\AbstractWidget;
