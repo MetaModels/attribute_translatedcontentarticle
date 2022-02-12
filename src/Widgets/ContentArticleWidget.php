@@ -31,6 +31,7 @@ use ContaoCommunityAlliance\DcGeneral\Contao\View\Contao2BackendView\ContaoBacke
 use ContaoCommunityAlliance\DcGeneral\Contao\View\Contao2BackendView\Widget\AbstractWidget;
 use ContaoCommunityAlliance\DcGeneral\Data\MultiLanguageDataProviderInterface;
 use Doctrine\DBAL\Connection;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
  * Class ArticleWidget
@@ -39,7 +40,6 @@ use Doctrine\DBAL\Connection;
  */
 class ContentArticleWidget extends AbstractWidget
 {
-
     /**
      * Submit user input.
      *
@@ -106,7 +106,8 @@ class ContentArticleWidget extends AbstractWidget
         $arrAttributes = null,
         DcCompat $dcCompat = null,
         Connection $connection = null,
-        Adapter $input = null
+        Adapter $input = null,
+        TranslatorInterface $translator = null
     ) {
         if (null === $connection) {
             // @codingStandardsIgnoreStart
@@ -129,6 +130,17 @@ class ContentArticleWidget extends AbstractWidget
             $input = System::getContainer()->get('contao.framework')->getAdapter(Input::class);
         }
         $this->input = $input;
+
+        if (null === $translator) {
+            // @codingStandardsIgnoreStart
+            @trigger_error(
+                'Translator is missing. It has to be passed in the constructor. Fallback will be dropped.',
+                E_USER_DEPRECATED
+            );
+            // @codingStandardsIgnoreEnd
+            $translator = System::getContainer()->get('translator');
+        }
+        $this->translator = $translator;
 
         parent::__construct($arrAttributes, $dcCompat);
 
@@ -229,7 +241,7 @@ class ContentArticleWidget extends AbstractWidget
                                          'rt'          => REQUEST_TOKEN,
                                      ]);
 
-        $contentElements = $this->getContentTypesByRecordId($this->currentRecord, $rootTable, $currentLang);
+        $contentElements = $this->getContentTypesByRecordId($this->currentRecord, $rootTable, $this->strName, $currentLang);
 
         $content = (new ContaoBackendViewTemplate($this->subTemplate))
             ->setTranslator($this->getEnvironment()->getTranslator())
@@ -255,7 +267,7 @@ class ContentArticleWidget extends AbstractWidget
      *
      * @throws \Exception Throws an Exception.
      */
-    private function getRootMetaModelTable(string $tableName)
+    public function getRootMetaModelTable(string $tableName)
     {
         $tables = [];
 
@@ -299,14 +311,19 @@ class ContentArticleWidget extends AbstractWidget
     /**
      * Retrieve all content elements of this item as parent.
      *
-     * @param int|null    $recordId   The record id.
-     * @param string      $ptableName The name of parent table.
-     * @param string|null $currentLang
+     * @param int|null    $recordId    The record id.
+     * @param string      $ptableName  The name of parent tab
+     * @param string      $slotName    The name of slot.
+     * @param string|null $currentLang The current language.
      *
      * @return array Returns array with content elements.
      */
-    private function getContentTypesByRecordId(?int $recordId, string $ptableName, ?string $currentLang): array
-    {
+    public function getContentTypesByRecordId(
+        ?int $recordId,
+        string $ptableName,
+        string $slotName,
+        ?string $currentLang
+    ): array {
         $contentElements = [];
 
         if (empty($recordId) || empty($ptableName)) {
@@ -324,13 +341,13 @@ class ContentArticleWidget extends AbstractWidget
             ->orderBy('t.sorting')
             ->setParameter('pid', $recordId)
             ->setParameter('ptable', $ptableName)
-            ->setParameter('slot', $this->name)
+            ->setParameter('slot', $slotName)
             ->setParameter('lang', $currentLang)
             ->execute();
 
         while ($row = $statement->fetchAssociative()) {
             $contentElements[] = [
-                'name'        => $this->getEnvironment()->getTranslator()->translate($row['type'] . '.0', 'CTE'),
+                'name'        => $this->translator->trans('CTE.' . $row['type'] . '.0', [], 'contao_default'),
                 'isInvisible' => $row['invisible']
                                  || ($row['start'] && $row['start'] > time())
                                  || ($row['stop'] && $row['stop'] <= time())
