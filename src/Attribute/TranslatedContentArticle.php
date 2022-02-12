@@ -3,7 +3,7 @@
 /**
  * This file is part of MetaModels/attribute_translatedcontentarticle.
  *
- * (c) 2012-2019 The MetaModels team.
+ * (c) 2012-2022 The MetaModels team.
  *
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
@@ -15,7 +15,8 @@
  * @author     Andreas Dziemba <adziemba@web.de>
  * @author     Stefan Heimes <stefan_heimes@hotmail.com>
  * @author     Marc Reimann <reimann@mediendepot-ruhr.de>
- * @copyright  2012-2019 The MetaModels team.
+ * @author     Ingolf Steinhardt <info@e-spin.de>
+ * @copyright  2012-2022 The MetaModels team.
  * @license    https://github.com/MetaModels/attribute_translatedcontentarticle/blob/master/LICENSE LGPL-3.0-or-later
  * @filesource
  */
@@ -24,57 +25,20 @@
 namespace MetaModels\AttributeTranslatedContentArticleBundle\Attribute;
 
 use Contao\Controller;
-use Contao\System;
 use MetaModels\Attribute\TranslatedReference;
-use MetaModels\IMetaModel;
-use Symfony\Component\EventDispatcher\EventDispatcherInterface;
+use MetaModels\ITranslatedMetaModel;
 
 /**
  * This is the AttributeTranslatedContentArticle class for handling article fields.
  */
 class TranslatedContentArticle extends TranslatedReference
 {
-
-    /**
-     * The event dispatcher.
-     *
-     * @var EventDispatcherInterface
-     */
-    private $eventDispatcher;
-
     /**
      * Array of Call Ids.
      *
      * @var array
      */
     private static $arrCallIds = [];
-
-    /**
-     * Create a new instance.
-     *
-     * @param IMetaModel               $objMetaModel The MetaModel instance this attribute belongs to.
-     * @param array                    $arrData      The attribute information array.
-     * @param EventDispatcherInterface $eventDispatcher
-     */
-    public function __construct(
-        IMetaModel $objMetaModel,
-        $arrData = [],
-        EventDispatcherInterface $eventDispatcher = null
-    ) {
-        parent::__construct($objMetaModel, $arrData);
-
-        if (null === $eventDispatcher) {
-            // @codingStandardsIgnoreStart Silencing errors is discouraged
-            @\trigger_error(
-                'Event dispatcher is missing. It has to be passed in the constructor. Fallback will be dropped.',
-                E_USER_DEPRECATED
-            );
-            // @codingStandardsIgnoreEnd
-            $eventDispatcher = System::getContainer()->get('event_dispatcher');
-        }
-
-        $this->eventDispatcher = $eventDispatcher;
-    }
 
     /**
      * {@inheritdoc}
@@ -88,7 +52,7 @@ class TranslatedContentArticle extends TranslatedReference
     /**
      * {@inheritdoc}
      */
-    public function getFieldDefinition($arrOverrides = array())
+    public function getFieldDefinition($arrOverrides = [])
     {
         $arrFieldDef              = parent::getFieldDefinition($arrOverrides);
         $arrFieldDef['inputType'] = 'translatedcontentarticle';
@@ -124,7 +88,7 @@ class TranslatedContentArticle extends TranslatedReference
     /**
      * {@inheritdoc}
      */
-    public function searchForInLanguages($strPattern, $arrLanguages = array())
+    public function searchForInLanguages($strPattern, $arrLanguages = [])
     {
         // Needed to fake implement ITranslate.
         return [];
@@ -150,13 +114,18 @@ class TranslatedContentArticle extends TranslatedReference
             return [];
         }
 
-        $strTable            = $this->getMetaModel()->getTableName();
-        $strColumn           = $this->getColName();
-        $strLanguage         = $this->getMetaModel()->isTranslated() ? $strLangCode : '-';
-        $strFallbackLanguage = $this->getMetaModel()->isTranslated()
-            ? $this->getMetaModel()->getFallbackLanguage()
-            : '-';
-        $arrData             = [];
+        $strTable  = $this->getMetaModel()->getTableName();
+        $strColumn = $this->getColName();
+        $model     = $this->getMetaModel();
+        if ($this->getMetaModel() instanceof ITranslatedMetaModel) {
+            $strLanguage         = $strLangCode;
+            $strFallbackLanguage = $model->getMainLanguage();
+        } else {
+            $strLanguage         = $model->isTranslated() ? $strLangCode : '';
+            $strFallbackLanguage = $model->isTranslated() ? $model->getFallbackLanguage() : '';
+        }
+
+        $arrData = [];
 
         foreach ($arrIds as $intId) {
             // Continue if it's a recursive call
@@ -176,8 +145,8 @@ class TranslatedContentArticle extends TranslatedReference
                     if ($objContent->mm_slot == $strColumn && $objContent->mm_lang == $strLanguage) {
                         $arrContent[] = Controller::getContentElement($objContent->current());
                     } elseif ($objContent->mm_slot == $strColumn
-                        && $strLanguage != $strFallbackLanguage
-                        && $objContent->mm_lang == $strFallbackLanguage
+                              && $strLanguage != $strFallbackLanguage
+                              && $objContent->mm_lang == $strFallbackLanguage
                     ) {
                         $arrContentFallback[] = Controller::getContentElement($objContent->current());
                     }
