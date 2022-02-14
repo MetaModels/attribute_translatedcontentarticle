@@ -25,6 +25,7 @@
 namespace MetaModels\AttributeTranslatedContentArticleBundle\Attribute;
 
 use Contao\Controller;
+use MetaModels\AttributeTranslatedContentArticleBundle\Widgets\ContentArticleWidget;
 use MetaModels\Attribute\TranslatedReference;
 use MetaModels\ITranslatedMetaModel;
 
@@ -109,14 +110,13 @@ class TranslatedContentArticle extends TranslatedReference
      */
     public function getTranslatedDataFor($arrIds, $strLangCode)
     {
-        // Generate only for frontend (speeds up the backend a little)
-        if (TL_MODE == 'BE') {
-            return [];
-        }
+        $strTable       = $this->getMetaModel()->getTableName();
+        $strColumn      = $this->getColName();
+        $model          = $this->getMetaModel();
+        $arrData        = [];
+        $contentArticle = new ContentArticleWidget();
+        $rootTable      = $contentArticle->getRootMetaModelTable($strTable);
 
-        $strTable  = $this->getMetaModel()->getTableName();
-        $strColumn = $this->getColName();
-        $model     = $this->getMetaModel();
         if ($this->getMetaModel() instanceof ITranslatedMetaModel) {
             $strLanguage         = $strLangCode;
             $strFallbackLanguage = $model->getMainLanguage();
@@ -125,40 +125,65 @@ class TranslatedContentArticle extends TranslatedReference
             $strFallbackLanguage = $model->isTranslated() ? $model->getFallbackLanguage() : '';
         }
 
-        $arrData = [];
-
         foreach ($arrIds as $intId) {
             // Continue if it's a recursive call
             $strCallId = $strTable . '_' . $strColumn . '_' . $strLanguage . '_' . $intId;
             if (isset(static::$arrCallIds[$strCallId])) {
-                $arrData[$intId]['value'] = sprintf('RECURSION: %s', $strCallId);
+                $arrData[$intId]['value'] = \sprintf('RECURSION: %s', $strCallId);
                 continue;
             }
             static::$arrCallIds[$strCallId] = true;
 
-            $objContent         = \ContentModel::findPublishedByPidAndTable($intId, $strTable);
-            $arrContent         = [];
-            $arrContentFallback = [];
-
-            if ($objContent !== null) {
-                while ($objContent->next()) {
-                    if ($objContent->mm_slot == $strColumn && $objContent->mm_lang == $strLanguage) {
-                        $arrContent[] = Controller::getContentElement($objContent->current());
-                    } elseif ($objContent->mm_slot == $strColumn
-                              && $strLanguage != $strFallbackLanguage
-                              && $objContent->mm_lang == $strFallbackLanguage
-                    ) {
-                        $arrContentFallback[] = Controller::getContentElement($objContent->current());
+            // Generate list for backend.
+            if (TL_MODE == 'BE') {
+                $elements = $contentArticle->getContentTypesByRecordId($intId, $rootTable, $strColumn, $strLanguage);
+                $content  = '';
+                if(count($elements)) {
+                    $content .= '<ul class="elements_container">';
+                    foreach ((array) $elements as $element) {
+                        $content .= \sprintf(
+                            '<li><div class="cte_type%s"><img src="system/themes/flexible/icons/%s.svg" width="16" height="16"> %s</div></li>',
+                            $element['isInvisible'] ? ' unpublished' : ' published',
+                            $element['isInvisible'] ? 'invisible' : 'visible',
+                            $element['name']
+                        );
                     }
+                    $content .= '</ul>';
+                }
+
+                if (!empty($content)) {
+                    $arrData[$intId]['value'] = [$content];
+                } else {
+                    $arrData[$intId]['value'] = [];
                 }
             }
 
-            if (!empty($arrContent)) {
-                $arrData[$intId]['value'] = $arrContent;
-            } elseif (!empty($arrContentFallback)) {
-                $arrData[$intId]['value'] = $arrContentFallback;
-            } else {
-                $arrData[$intId]['value'] = [];
+            // Generate output for frontend.
+            if (TL_MODE == 'FE') {
+                $objContent         = \ContentModel::findPublishedByPidAndTable($intId, $strTable);
+                $arrContent         = [];
+                $arrContentFallback = [];
+
+                if ($objContent !== null) {
+                    while ($objContent->next()) {
+                        if ($objContent->mm_slot == $strColumn && $objContent->mm_lang == $strLanguage) {
+                            $arrContent[] = Controller::getContentElement($objContent->current());
+                        } elseif ($objContent->mm_slot == $strColumn
+                                  && $strLanguage != $strFallbackLanguage
+                                  && $objContent->mm_lang == $strFallbackLanguage
+                        ) {
+                            $arrContentFallback[] = Controller::getContentElement($objContent->current());
+                        }
+                    }
+                }
+
+                if (!empty($arrContent)) {
+                    $arrData[$intId]['value'] = $arrContent;
+                } elseif (!empty($arrContentFallback)) {
+                    $arrData[$intId]['value'] = $arrContentFallback;
+                } else {
+                    $arrData[$intId]['value'] = [];
+                }
             }
 
             unset(static::$arrCallIds[$strCallId]);
