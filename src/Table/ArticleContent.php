@@ -254,13 +254,13 @@ class ArticleContent
      *
      * @param int   $accessId Check ID.
      *
-     * @param array $ptable   Parent Table.
+     * @param string $ptable   Parent Table.
      *
      * @param bool  $blnIsPid Is the ID a PID.
      *
      * @return bool
      */
-    protected function checkAccessToElement(int $accessId, array $ptable, bool $blnIsPid = false)
+    protected function checkAccessToElement(int $accessId, string $ptable, bool $blnIsPid = false)
     {
         $strScript = Environment::get('script');
 
