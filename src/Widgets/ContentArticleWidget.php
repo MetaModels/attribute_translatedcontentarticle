@@ -94,7 +94,6 @@ class ContentArticleWidget extends AbstractWidget
      *
      * @var \ContaoCommunityAlliance\DcGeneral\Contao\Compatibility\DcCompat|null
      */
-    private $dcCompat;
 
     /**
      * Check if we have an id, if not set a flag.
@@ -241,7 +240,8 @@ class ContentArticleWidget extends AbstractWidget
                                          'rt'          => REQUEST_TOKEN,
                                      ]);
 
-        $contentElements = $this->getContentTypesByRecordId($this->currentRecord, $rootTable, $this->strName, $currentLang);
+        $contentElements =
+            $this->getContentTypesByRecordId($this->currentRecord, $rootTable, $this->strName, $currentLang);
 
         $content = (new ContaoBackendViewTemplate($this->subTemplate))
             ->setTranslator($this->getEnvironment()->getTranslator())
@@ -312,7 +312,7 @@ class ContentArticleWidget extends AbstractWidget
      * Retrieve all content elements of this item as parent.
      *
      * @param int|null    $recordId    The record id.
-     * @param string      $ptableName  The name of parent tab
+     * @param string      $ptableName  The name of parent tab.
      * @param string      $slotName    The name of slot.
      * @param string|null $currentLang The current language.
      *
