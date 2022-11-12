@@ -52,7 +52,7 @@ class BackendEventListener
     /**
      * The ArticleContent constructor.
      *
-     * @param Connection|null $connection
+     * @param Connection|null $connection The connection.
      */
     public function __construct(Connection $connection = null)
     {

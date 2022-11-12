@@ -138,15 +138,17 @@ class TranslatedContentArticle extends TranslatedReference
             if (TL_MODE == 'BE') {
                 $elements = $contentArticle->getContentTypesByRecordId($intId, $rootTable, $strColumn, $strLanguage);
                 $content  = '';
-                if(count($elements)) {
+                if (count($elements)) {
                     $content .= '<ul class="elements_container">';
                     foreach ((array) $elements as $element) {
+                        // @codingStandardsIgnoreStart - one line template.
                         $content .= \sprintf(
                             '<li><div class="cte_type%s"><img src="system/themes/flexible/icons/%s.svg" width="16" height="16"> %s</div></li>',
                             $element['isInvisible'] ? ' unpublished' : ' published',
                             $element['isInvisible'] ? 'invisible' : 'visible',
                             $element['name']
                         );
+                        // @codingStandardsIgnoreEnd
                     }
                     $content .= '</ul>';
                 }
