@@ -3,7 +3,7 @@
 /**
  * This file is part of MetaModels/attribute_translatedcontentarticle.
  *
- * (c) 2012-2019 The MetaModels team.
+ * (c) 2012-2022 The MetaModels team.
  *
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
@@ -14,16 +14,19 @@
  * @subpackage AttributeTranslatedContentArticle
  * @author     Andreas Dziemba <adziemba@web.de>
  * @author     Stefan Heimes <stefan_heimes@hotmail.com>
- * @copyright  2012-2019 The MetaModels team.
+ * @author     Ingolf Steinhardt <info@e-spin.de>
+ * @copyright  2012-2022 The MetaModels team.
  * @license    https://github.com/MetaModels/attribute_translatedcontentarticle/blob/master/LICENSE LGPL-3.0-or-later
  * @filesource
  */
 
 namespace MetaModels\AttributeTranslatedContentArticleBundle\EventListener;
 
+use Contao\System;
 use ContaoCommunityAlliance\DcGeneral\Contao\View\Contao2BackendView\Event\ManipulateWidgetEvent;
 use ContaoCommunityAlliance\DcGeneral\Event\PostDuplicateModelEvent;
 use ContaoCommunityAlliance\DcGeneral\Event\PostPasteModelEvent;
+use Doctrine\DBAL\Connection;
 use MetaModels\DcGeneral\Data\Driver;
 use MetaModels\DcGeneral\Data\Model;
 
@@ -38,6 +41,32 @@ class BackendEventListener
      * @var int
      */
     private $intDuplicationSourceId;
+
+    /**
+     * The database connection.
+     *
+     * @var \Doctrine\DBAL\Connection
+     */
+    private $connection;
+
+    /**
+     * The ArticleContent constructor.
+     *
+     * @param Connection|null $connection The connection.
+     */
+    public function __construct(Connection $connection = null)
+    {
+        if (null === $connection) {
+            // @codingStandardsIgnoreStart
+            @trigger_error(
+                'Connection is missing. It has to be passed in the constructor. Fallback will be dropped.',
+                E_USER_DEPRECATED
+            );
+            // @codingStandardsIgnoreEnd
+            $connection = System::getContainer()->get('database_connection');
+        }
+        $this->connection = $connection;
+    }
 
     /**
      * Handle Post Duplication Model.
@@ -101,19 +130,26 @@ class BackendEventListener
      */
     private function duplicateContentEntries($strTable, $intSourceId, $intDestinationId)
     {
-        $objContent = \Database::getInstance()
-                               ->prepare('SELECT * FROM tl_content WHERE pid=? AND ptable=?')
-                               ->execute($intSourceId, $strTable);
+        $objContent = $this->connection
+            ->createQueryBuilder()
+            ->select('*')
+            ->from('tl_content', 't')
+            ->where('t.pid=:id')
+            ->andWhere('t.ptable=:ptable')
+            ->setParameter('id', $intSourceId)
+            ->setParameter('ptable', $strTable)
+            ->execute();
 
-        while ($objContent->next()) {
-            $arrContent        = $objContent->row();
+        while ($row = $objContent->fetch(\PDO::FETCH_ASSOC)) {
+            $arrContent        = $row;
             $arrContent['pid'] = $intDestinationId;
             unset($arrContent['id']);
 
-            \Database::getInstance()
-                     ->prepare('INSERT INTO tl_content %s')
-                     ->set($arrContent)
-                     ->execute();
+            $this->connection
+                ->createQueryBuilder()
+                ->insert('tl_content')
+                ->setParameters($arrContent)
+                ->execute();
         }
     }
 

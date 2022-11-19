@@ -3,7 +3,7 @@
 /**
  * This file is part of MetaModels/attribute_translatedcontentarticle.
  *
- * (c) 2012-2021 The MetaModels team.
+ * (c) 2012-2022 The MetaModels team.
  *
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
@@ -16,7 +16,7 @@
  * @author     Ingolf Steinhardt <info@e-spin.de>
  * @author     Stefan Heimes <stefan_heimes@hotmail.com>
  * @author     Marc Reimann <reimann@mediendepot-ruhr.de>
- * @copyright  2012-2021 The MetaModels team.
+ * @copyright  2012-2022 The MetaModels team.
  * @license    https://github.com/MetaModels/attribute_translatedcontentarticle/blob/master/LICENSE LGPL-3.0-or-later
  * @filesource
  */
@@ -33,6 +33,7 @@ use Contao\Input;
 use Contao\Message;
 use Contao\Session;
 use Contao\System;
+use Doctrine\DBAL\Connection;
 use Symfony\Component\HttpFoundation\Session\SessionInterface;
 
 /**
@@ -42,6 +43,32 @@ use Symfony\Component\HttpFoundation\Session\SessionInterface;
  */
 class ArticleContent
 {
+    /**
+     * The database connection.
+     *
+     * @var \Doctrine\DBAL\Connection
+     */
+    private $connection;
+
+    /**
+     * The ArticleContent constructor.
+     *
+     * @param Connection|null $connection The connection.
+     */
+    public function __construct(Connection $connection = null)
+    {
+        if (null === $connection) {
+            // @codingStandardsIgnoreStart
+            @trigger_error(
+                'Connection is missing. It has to be passed in the constructor. Fallback will be dropped.',
+                E_USER_DEPRECATED
+            );
+            // @codingStandardsIgnoreEnd
+            $connection = System::getContainer()->get('database_connection');
+        }
+        $this->connection = $connection;
+    }
+
     /**
      * Return the "toggle visibility" button
      *
@@ -68,9 +95,16 @@ class ArticleContent
             $lang = '';
         }
 
-        Database::getInstance()
-                ->prepare('UPDATE tl_content SET mm_slot=?, mm_lang=? WHERE id=?')
-                ->execute(Input::get('slot'), $lang, $dataContainer->id);
+        $this->connection
+            ->createQueryBuilder()
+            ->update('tl_content', 't')
+            ->set('t.mm_slot', ':slot')
+            ->set('t.mm_lang', ':lang')
+            ->where('t.id=:id')
+            ->setParameter('slot', Input::get('slot'))
+            ->setParameter('lang', $lang)
+            ->setParameter('id', $dataContainer->id)
+            ->execute();
     }
 
     /**
@@ -108,15 +142,20 @@ class ArticleContent
             );
         }
 
-        Database::getInstance()
-                ->prepare('UPDATE tl_content SET pid=?, ptable=?, mm_slot=?, mm_lang=? WHERE id=?')
-                ->execute(
-                    $pid,
-                    $ptable,
-                    $slot,
-                    $lang,
-                    $insertId
-                );
+        $this->connection
+            ->createQueryBuilder()
+            ->update('tl_content', 't')
+            ->set('t.pid', ':pid')
+            ->set('t.ptable', ':ptable')
+            ->set('t.mm_slot', ':slot')
+            ->set('t.mm_lang', ':lang')
+            ->where('t.id=:id')
+            ->setParameter('pid', $pid)
+            ->setParameter('ptable', $ptable)
+            ->setParameter('slot', $slot)
+            ->setParameter('lang', $lang)
+            ->setParameter('id', $insertId)
+            ->execute();
     }
 
     /**
@@ -151,15 +190,20 @@ class ArticleContent
             );
         }
 
-        Database::getInstance()
-                ->prepare('UPDATE tl_content SET pid=?, ptable=?, mm_slot=?, mm_lang=? WHERE id=?')
-                ->execute(
-                    $pid,
-                    $ptable,
-                    $slot,
-                    $lang,
-                    $insertId
-                );
+        $this->connection
+            ->createQueryBuilder()
+            ->update('tl_content', 't')
+            ->set('t.pid', ':pid')
+            ->set('t.ptable', ':ptable')
+            ->set('t.mm_slot', ':slot')
+            ->set('t.mm_lang', ':lang')
+            ->where('t.id=:id')
+            ->setParameter('pid', $pid)
+            ->setParameter('ptable', $ptable)
+            ->setParameter('slot', $slot)
+            ->setParameter('lang', $lang)
+            ->setParameter('id', $insertId)
+            ->execute();
     }
 
     /**
@@ -176,12 +220,13 @@ class ArticleContent
 
         // Prevent deleting referenced elements (see #4898)
         if (\Input::get('act') == 'deleteAll') {
-            $objCes = Database::getInstance()
-                              ->prepare("SELECT cteAlias 
-                                    FROM tl_content 
-                                    WHERE (ptable='tl_article' OR ptable='') 
-                                      AND type='alias'")
-                              ->execute();
+            $objCes = $this->connection
+                ->createQueryBuilder()
+                ->select('t.cteAlias')
+                ->from('tl_content', 't')
+                ->where('t.ptable=\'tl_article\' OR t.ptable=\'\'')
+                ->andWhere('t.type=\'alias\'')
+                ->execute();
 
             $session                   = $objSession->all();
             $session['CURRENT']['IDS'] = \array_diff($session['CURRENT']['IDS'], $objCes->fetchEach('cteAlias'));
@@ -215,15 +260,21 @@ class ArticleContent
             case 'cutAll':
             case 'copyAll':
                 // Check access to the parent element if a content element is moved
-                if ((Input::get('act') == 'cutAll' ||
-                        Input::get('act') == 'copyAll') &&
-                    !$this->checkAccessToElement(\Input::get('pid'), $strParentTable)) {
+                if ((Input::get('act') == 'cutAll'
+                     || Input::get('act') == 'copyAll')
+                    && !$this->checkAccessToElement(\Input::get('pid'), $strParentTable)) {
                     $this->redirect('contao?act=error');
                 }
 
-                $objCes = Database::getInstance()
-                                  ->prepare('SELECT id FROM tl_content WHERE ptable=? AND pid=?')
-                                  ->execute($strParentTable, CURRENT_ID);
+                $objCes = $this->connection
+                    ->createQueryBuilder()
+                    ->select('t.id')
+                    ->from('tl_content', 't')
+                    ->where('t.ptable=:parentTable')
+                    ->andWhere('t.pid=:currentId')
+                    ->setParameter('parentTable', $strParentTable)
+                    ->setParameter('currentId', CURRENT_ID)
+                    ->execute();
 
                 $session                   = Session::getInstance()->getData();
                 $session['CURRENT']['IDS'] = array_intersect(
@@ -267,15 +318,25 @@ class ArticleContent
         // Workaround for missing ptable when called via Page/File Picker
         if ($strScript != 'contao/page.php' && $strScript != 'contao/file.php') {
             if ($blnIsPid) {
-                $objContent = Database::getInstance()
-                                      ->prepare('SELECT 1 FROM `' . $ptable . '` WHERE id=?')
-                                      ->limit(1)
-                                      ->execute($accessId);
+                $objContent = $this->connection
+                    ->createQueryBuilder()
+                    ->select(1)
+                    ->from($ptable, 't')
+                    ->where('t.id=:id')
+                    ->setParameter('id', $accessId)
+                    ->setMaxResults(1)
+                    ->execute();
             } else {
-                $objContent = Database::getInstance()
-                                      ->prepare('SELECT 1 FROM tl_content WHERE id=? AND ptable=?')
-                                      ->limit(1)
-                                      ->execute($accessId, $ptable);
+                $objContent = $this->connection
+                    ->createQueryBuilder()
+                    ->select(1)
+                    ->from('tl_content', 't')
+                    ->where('t.id=:id')
+                    ->andWhere('t.ptable=:ptable')
+                    ->setParameter('id', $accessId)
+                    ->setParameter('ptable', $ptable)
+                    ->setMaxResults(1)
+                    ->execute();
             }
         }
 
@@ -303,7 +364,7 @@ class ArticleContent
         $objMetaModel = $factory->getMetaModel($dataContainer->parentTable);
 
         $intId           = $dataContainer->id;
-        $strParentTable  = $dataContainer->parentTable;
+        $ptable          = $dataContainer->parentTable;
         $strSlot         = Input::get('slot');
         $strLanguage     = Input::get('lang');
         $strMainLanguage = $objMetaModel->getFallbackLanguage();
@@ -316,20 +377,33 @@ class ArticleContent
             return;
         }
 
-        $objContent = Database::getInstance()
-                              ->prepare('SELECT * FROM tl_content WHERE pid=? AND ptable=? AND mm_slot=? AND mm_lang=?')
-                              ->execute($intId, $strParentTable, $strSlot, $strMainLanguage);
+        $objContent = $this->connection
+            ->createQueryBuilder()
+            ->select('*')
+            ->from('tl_content', 't')
+            ->where('t.pid=:id')
+            ->andWhere('t.ptable=:ptable')
+            ->andWhere('t.mm_slot=:slot')
+            ->andWhere('t.mm_lang=:lang')
+            ->setParameter('id', $intId)
+            ->setParameter('ptable', $ptable)
+            ->setParameter('slot', $strSlot)
+            ->setParameter('lang', $strMainLanguage)
+            ->execute();
 
         $counter = 0;
-        while ($objContent->next()) {
-            $arrContent            = $objContent->row();
+
+        while ($row = $objContent->fetch(\PDO::FETCH_ASSOC)) {
+            $arrContent            = $row;
             $arrContent['mm_lang'] = $strLanguage;
             unset($arrContent['id']);
 
-            Database::getInstance()
-                    ->prepare('INSERT INTO tl_content %s')
-                    ->set($arrContent)
-                    ->execute();
+            $this->connection
+                ->createQueryBuilder()
+                ->insert('tl_content')
+                ->setParameters($arrContent)
+                ->execute();
+
             $counter++;
         }
 
