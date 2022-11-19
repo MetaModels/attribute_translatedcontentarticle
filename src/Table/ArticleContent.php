@@ -53,7 +53,7 @@ class ArticleContent
     /**
      * The ArticleContent constructor.
      *
-     * @param Connection|null $connection
+     * @param Connection|null $connection The connection.
      */
     public function __construct(Connection $connection = null)
     {
@@ -128,7 +128,7 @@ class ArticleContent
         $lang   = Input::get('lang');
 
         if (empty($pid) || empty($ptable) || empty($slot)) {
-            $errorCode = 'Could not update row because one of the data are missing. ';
+            $errorCode  = 'Could not update row because one of the data are missing. ';
             $errorCode .= 'Insert ID: %s, Pid: %s, Parent table: %s, Slot: %s, Lang: %s';
             throw new \RuntimeException(
                 \sprintf(
@@ -176,7 +176,7 @@ class ArticleContent
         $insertId = $dataContainer->id;
 
         if (empty($pid) || empty($ptable) || empty($slot)) {
-            $errorCode = 'Could not update row because one of the data are missing. ';
+            $errorCode  = 'Could not update row because one of the data are missing. ';
             $errorCode .= 'Insert ID: %s, Pid: %s, Parent table: %s, Slot: %s, Lang: %s';
             throw new \RuntimeException(
                 \sprintf(
@@ -364,7 +364,7 @@ class ArticleContent
         $objMetaModel = $factory->getMetaModel($dataContainer->parentTable);
 
         $intId           = $dataContainer->id;
-        $strParentTable  = $dataContainer->parentTable;
+        $ptable          = $dataContainer->parentTable;
         $strSlot         = Input::get('slot');
         $strLanguage     = Input::get('lang');
         $strMainLanguage = $objMetaModel->getFallbackLanguage();

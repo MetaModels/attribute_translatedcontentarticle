@@ -5,7 +5,7 @@ declare(strict_types=1);
 /**
  * This file is part of MetaModels/attribute_contentarticle.
  *
- * (c) 2012-2019 The MetaModels team.
+ * (c) 2012-2022 The MetaModels team.
  *
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
@@ -15,6 +15,7 @@ declare(strict_types=1);
  * @package    MetaModels
  * @subpackage AttributeContentArticle
  * @author     Stefan Heimes <stefan_heimes@hotmail.com>
+ * @author     Sven Baumann <baumann.sv@gmail.com>
  */
 
 namespace DependencyInjection;
@@ -24,6 +25,7 @@ use MetaModels\AttributeTranslatedContentArticleBundle\EventListener\BackendEven
 use MetaModels\AttributeTranslatedContentArticleBundle\EventListener\GetOptionsListener;
 use MetaModels\AttributeTranslatedContentArticleBundle\EventListener\InitializeListener;
 use MetaModels\AttributeTranslatedContentArticleBundle\DependencyInjection\MetaModelsAttributeTranslatedContentArticleExtension;
+use MetaModels\AttributeTranslatedContentArticleBundle\Table\ArticleContent;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 
@@ -43,7 +45,8 @@ class MetaModelsAttributeTranslatedContentArticleExtensionTest extends TestCase
             BackendEventListener::class,
             GetOptionsListener::class,
             InitializeListener::class,
-            AttributeTypeFactory::class
+            AttributeTypeFactory::class,
+            ArticleContent::class
         ];
 
         self::assertCount(count($expectedDefinitions), $container->getDefinitions());
