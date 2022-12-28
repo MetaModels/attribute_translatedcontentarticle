@@ -3,7 +3,7 @@
 /**
  * This file is part of MetaModels/attribute_translatedcontentarticle.
  *
- * (c) 2012-2019 The MetaModels team.
+ * (c) 2012-2022 The MetaModels team.
  *
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
@@ -14,7 +14,8 @@
  * @subpackage AttributeTranslatedContentArticle
  * @author     Andreas Dziemba <adziemba@web.de>
  * @author     Stefan Heimes <stefan_heimes@hotmail.com>
- * @copyright  2012-2019 The MetaModels team.
+ * @author     Ingolf Steinhardt <info@e-spin.de>
+ * @copyright  2012-2022 The MetaModels team.
  * @license    https://github.com/MetaModels/attribute_translatedcontentarticle/blob/master/LICENSE LGPL-3.0-or-later
  * @filesource
  */
@@ -41,5 +42,9 @@ class MetaModelsAttributeTranslatedContentArticleExtension extends Extension
         $loader = new Loader\YamlFileLoader($container, new FileLocator(__DIR__ . '/../Resources/config'));
         $loader->load('listeners.yml');
         $loader->load('services.yml');
+
+        $managedSchemaTypeNames   = $container->getParameter('metamodels.managed-schema-type-names') ?? [];
+        $managedSchemaTypeNames[] = 'translatedcontentarticle';
+        $container->setParameter('metamodels.managed-schema-type-names', $managedSchemaTypeNames);
     }
 }
