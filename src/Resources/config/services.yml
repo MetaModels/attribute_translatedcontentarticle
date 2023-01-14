@@ -9,6 +9,8 @@ services:
       public: true
       arguments:
         - '@database_connection'
+        - '@session'
+        - '@metamodels.factory'
     MetaModels\AttributeTranslatedContentArticleBundle\EventListener\BackendEventListener:
       public: true
       arguments:

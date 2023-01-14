@@ -3,7 +3,7 @@
 /**
  * This file is part of MetaModels/attribute_translatedcontentarticle.
  *
- * (c) 2012-2022 The MetaModels team.
+ * (c) 2012-2023 The MetaModels team.
  *
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
@@ -16,7 +16,7 @@
  * @author     Ingolf Steinhardt <info@e-spin.de>
  * @author     Stefan Heimes <stefan_heimes@hotmail.com>
  * @author     Marc Reimann <reimann@mediendepot-ruhr.de>
- * @copyright  2012-2022 The MetaModels team.
+ * @copyright  2012-2023 The MetaModels team.
  * @license    https://github.com/MetaModels/attribute_translatedcontentarticle/blob/master/LICENSE LGPL-3.0-or-later
  * @filesource
  */
@@ -26,14 +26,15 @@ namespace MetaModels\AttributeTranslatedContentArticleBundle\Table;
 use Contao\Backend;
 use Contao\BackendUser;
 use Contao\Controller;
-use Contao\Database;
 use Contao\DataContainer;
+use Contao\Database;
 use Contao\Environment;
 use Contao\Input;
 use Contao\Message;
-use Contao\Session;
 use Contao\System;
 use Doctrine\DBAL\Connection;
+use MetaModels\Factory;
+use Symfony\Component\HttpFoundation\Session\Session;
 use Symfony\Component\HttpFoundation\Session\SessionInterface;
 
 /**
@@ -51,22 +52,57 @@ class ArticleContent
     private $connection;
 
     /**
+     * Symfony session object
+     *
+     * @var Session|null
+     */
+    private Session|null $session;
+
+    /**
+     * MetaModels factory.
+     *
+     * @var Factory|null
+     */
+    private $factory;
+
+    /**
      * The ArticleContent constructor.
      *
      * @param Connection|null $connection The connection.
+     * @param Session|null    $session    The session.
+     * @param Factory         $factory    The factory.
      */
-    public function __construct(Connection $connection = null)
+    public function __construct(Connection $connection = null, Session $session = null, Factory $factory = null)
     {
-        if (null === $connection) {
+        if (null === ($this->connection = $connection)) {
             // @codingStandardsIgnoreStart
             @trigger_error(
                 'Connection is missing. It has to be passed in the constructor. Fallback will be dropped.',
                 E_USER_DEPRECATED
             );
             // @codingStandardsIgnoreEnd
-            $connection = System::getContainer()->get('database_connection');
+            $this->connection = System::getContainer()->get('database_connection');
         }
-        $this->connection = $connection;
+
+        if (null === ($this->session = $session)) {
+            // @codingStandardsIgnoreStart
+            @trigger_error(
+                'Not passing an "Session" is deprecated.',
+                E_USER_DEPRECATED
+            );
+            // @codingStandardsIgnoreEnd
+            $this->session = System::getContainer()->get('session');
+        }
+
+        if (null === ($this->factory = $factory)) {
+            // @codingStandardsIgnoreStart
+            @trigger_error(
+                'Not passing an "Factory" is deprecated.',
+                E_USER_DEPRECATED
+            );
+            // @codingStandardsIgnoreEnd
+            $this->factory = System::getContainer()->get('metamodels.factory');
+        }
     }
 
     /**
@@ -104,7 +140,7 @@ class ArticleContent
             ->setParameter('slot', Input::get('slot'))
             ->setParameter('lang', $lang)
             ->setParameter('id', $dataContainer->id)
-            ->execute();
+            ->executeQuery();
     }
 
     /**
@@ -155,7 +191,7 @@ class ArticleContent
             ->setParameter('slot', $slot)
             ->setParameter('lang', $lang)
             ->setParameter('id', $insertId)
-            ->execute();
+            ->executeQuery();
     }
 
     /**
@@ -203,7 +239,7 @@ class ArticleContent
             ->setParameter('slot', $slot)
             ->setParameter('lang', $lang)
             ->setParameter('id', $insertId)
-            ->execute();
+            ->executeQuery();
     }
 
     /**
@@ -226,11 +262,11 @@ class ArticleContent
                 ->from('tl_content', 't')
                 ->where('t.ptable=\'tl_article\' OR t.ptable=\'\'')
                 ->andWhere('t.type=\'alias\'')
-                ->execute();
+                ->executeQuery();
 
-            $session                   = $objSession->all();
+            $session                   = $this->session->all();
             $session['CURRENT']['IDS'] = \array_diff($session['CURRENT']['IDS'], $objCes->fetchEach('cteAlias'));
-            $objSession->replace($session);
+            $this->session->replace($session);
         }
 
         if (BackendUser::getInstance()->isAdmin) {
@@ -238,7 +274,7 @@ class ArticleContent
         }
 
         $strParentTable = Input::get('ptable');
-        $strParentTable = preg_replace('#[^A-Za-z0-9_]#', '', $strParentTable);
+        $strParentTable = \preg_replace('#[^A-Za-z0-9_]#', '', $strParentTable);
 
         // Check the current action
         switch (Input::get('act')) {
@@ -274,14 +310,14 @@ class ArticleContent
                     ->andWhere('t.pid=:currentId')
                     ->setParameter('parentTable', $strParentTable)
                     ->setParameter('currentId', CURRENT_ID)
-                    ->execute();
+                    ->executeQuery();
 
-                $session                   = Session::getInstance()->getData();
-                $session['CURRENT']['IDS'] = array_intersect(
+                $session                   = $this->session->all();
+                $session['CURRENT']['IDS'] = \array_intersect(
                     $session['CURRENT']['IDS'],
                     $objCes->fetchEach('id')
                 );
-                $objSession->replace($session);
+                $this->session->replace($session);
                 break;
 
             case 'cut':
@@ -325,7 +361,7 @@ class ArticleContent
                     ->where('t.id=:id')
                     ->setParameter('id', $accessId)
                     ->setMaxResults(1)
-                    ->execute();
+                    ->executeQuery();
             } else {
                 $objContent = $this->connection
                     ->createQueryBuilder()
@@ -336,7 +372,7 @@ class ArticleContent
                     ->setParameter('id', $accessId)
                     ->setParameter('ptable', $ptable)
                     ->setMaxResults(1)
-                    ->execute();
+                    ->executeQuery();
             }
         }
 
@@ -359,9 +395,7 @@ class ArticleContent
      */
     public function addMainLangContent(DataContainer $dataContainer)
     {
-        $factory = System::getContainer()->get('metamodels.factory');
-        /** @var \MetaModels\IFactory $factory */
-        $objMetaModel = $factory->getMetaModel($dataContainer->parentTable);
+        $objMetaModel = $this->factory->getMetaModel($dataContainer->parentTable);
 
         $intId           = $dataContainer->id;
         $ptable          = $dataContainer->parentTable;
@@ -389,7 +423,7 @@ class ArticleContent
             ->setParameter('ptable', $ptable)
             ->setParameter('slot', $strSlot)
             ->setParameter('lang', $strMainLanguage)
-            ->execute();
+            ->executeQuery();
 
         $counter = 0;
 
@@ -402,7 +436,7 @@ class ArticleContent
                 ->createQueryBuilder()
                 ->insert('tl_content')
                 ->setParameters($arrContent)
-                ->execute();
+                ->executeQuery();
 
             $counter++;
         }
