@@ -23,57 +23,67 @@
 
 namespace MetaModels\AttributeTranslatedContentArticleBundle\Table;
 
-use Contao\Backend;
 use Contao\BackendUser;
 use Contao\Controller;
 use Contao\DataContainer;
-use Contao\Database;
-use Contao\Environment;
 use Contao\Input;
 use Contao\Message;
 use Contao\System;
 use Doctrine\DBAL\Connection;
+use Doctrine\DBAL\Exception;
 use MetaModels\Factory;
+use MetaModels\ITranslatedMetaModel;
+use Symfony\Component\HttpFoundation\Session\Attribute\AttributeBagInterface;
 use Symfony\Component\HttpFoundation\Session\Session;
-use Symfony\Component\HttpFoundation\Session\SessionInterface;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
  * Provide miscellaneous methods that are used by the data configuration array.
- *
- * @author Leo Feyer <https://github.com/leofeyer>
  */
 class ArticleContent
 {
     /**
      * The database connection.
      *
-     * @var \Doctrine\DBAL\Connection
+     * @var Connection|null
      */
-    private $connection;
+    private Connection|null $connection;
 
     /**
-     * Symfony session object
+     * Symfony session object.
      *
-     * @var Session|null
+     * @var Session
      */
-    private Session|null $session;
+    private Session $session;
 
     /**
      * MetaModels factory.
      *
      * @var Factory|null
      */
-    private $factory;
+    private Factory|null $factory;
+
+    /**
+     * The translator interface.
+     *
+     * @var TranslatorInterface
+     */
+    private TranslatorInterface $translator;
 
     /**
      * The ArticleContent constructor.
      *
-     * @param Connection|null $connection The connection.
-     * @param Session|null    $session    The session.
-     * @param Factory         $factory    The factory.
+     * @param Connection|null $connection          The connection.
+     * @param Session|null $session                The session.
+     * @param Factory|null $factory                The factory.
+     * @param TranslatorInterface|null $translator The translator interface.
      */
-    public function __construct(Connection $connection = null, Session $session = null, Factory $factory = null)
-    {
+    public function __construct(
+        Connection $connection = null,
+        Session $session = null,
+        Factory $factory = null,
+        TranslatorInterface $translator = null
+    ) {
         if (null === ($this->connection = $connection)) {
             // @codingStandardsIgnoreStart
             @trigger_error(
@@ -91,7 +101,9 @@ class ArticleContent
                 E_USER_DEPRECATED
             );
             // @codingStandardsIgnoreEnd
-            $this->session = System::getContainer()->get('session');
+            $session = System::getContainer()->get('session');
+            assert($session instanceof Session);
+            $this->session = $session;
         }
 
         if (null === ($this->factory = $factory)) {
@@ -101,20 +113,32 @@ class ArticleContent
                 E_USER_DEPRECATED
             );
             // @codingStandardsIgnoreEnd
-            $this->factory = System::getContainer()->get('metamodels.factory');
+            $factory = System::getContainer()->get('metamodels.factory');
+            assert($factory instanceof Factory);
+            $this->factory = $factory;
+        }
+
+        if (null === $this->translator = $translator) {
+            // @codingStandardsIgnoreStart
+            @trigger_error(
+                'Translator is missing. It has to be passed in the constructor. Fallback will be dropped.',
+                E_USER_DEPRECATED
+            );
+            // @codingStandardsIgnoreEnd
+            $this->translator = System::getContainer()->get('translator');
         }
     }
 
     /**
-     * Return the "toggle visibility" button
+     * Return the "toggle visibility" button.
      *
      * @return string The icon url with all information.
      */
-    public function toggleIcon()
+    public function toggleIcon(): string
     {
         $controller = new \tl_content();
 
-        return call_user_func_array([$controller, 'toggleIcon'], func_get_args());
+        return \call_user_func_array([$controller, 'toggleIcon'], \func_get_args());
     }
 
     /**
@@ -123,8 +147,9 @@ class ArticleContent
      * @param DataContainer $dataContainer The DC Driver.
      *
      * @return void
+     * @throws Exception
      */
-    public function save(DataContainer $dataContainer)
+    public function save(DataContainer $dataContainer): void
     {
         $lang = \Input::get('lang');
         if (empty($lang)) {
@@ -147,16 +172,14 @@ class ArticleContent
      * Update the data from copies and set the context like pid, parent table, slot.
      *
      * @param string        $insertId      The id of the new entry.
-     *
      * @param DataContainer $dataContainer The DC Driver.
      *
      * @return void
      *
-     * @throws \RuntimeException If a parameter is missing.
-     *
+     * @throws Exception If a parameter is missing.
      * @SuppressWarnings(PHPMD)
      */
-    public function updateCopyData(string $insertId, DataContainer $dataContainer)
+    public function updateCopyData(string $insertId, DataContainer $dataContainer): void
     {
         $pid    = Input::get('mid');
         $ptable = Input::get('ptable');
@@ -201,9 +224,9 @@ class ArticleContent
      *
      * @return void
      *
-     * @throws \RuntimeException If a parameter is missing.
+     * @throws Exception If a parameter is missing.
      */
-    public function updateCutData(DataContainer $dataContainer)
+    public function updateCutData(DataContainer $dataContainer): void
     {
         $pid      = Input::get('mid');
         $ptable   = Input::get('ptable');
@@ -245,30 +268,16 @@ class ArticleContent
     /**
      * Check permissions to edit table tl_content.
      *
+     * @param DataContainer $dataContainer The DC Driver.
+     *
      * @return void
      *
+     * @throws Exception
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+     *
      */
-    public function checkPermission()
+    public function checkPermission(DataContainer $dataContainer): void
     {
-        /** @var SessionInterface $objSession */
-        $objSession = System::getContainer()->get('session');
-
-        // Prevent deleting referenced elements (see #4898)
-        if (\Input::get('act') == 'deleteAll') {
-            $objCes = $this->connection
-                ->createQueryBuilder()
-                ->select('t.cteAlias')
-                ->from('tl_content', 't')
-                ->where('t.ptable=\'tl_article\' OR t.ptable=\'\'')
-                ->andWhere('t.type=\'alias\'')
-                ->executeQuery();
-
-            $session                   = $this->session->all();
-            $session['CURRENT']['IDS'] = \array_diff($session['CURRENT']['IDS'], $objCes->fetchEach('cteAlias'));
-            $this->session->replace($session);
-        }
-
         if (BackendUser::getInstance()->isAdmin) {
             return;
         }
@@ -276,32 +285,13 @@ class ArticleContent
         $strParentTable = Input::get('ptable');
         $strParentTable = \preg_replace('#[^A-Za-z0-9_]#', '', $strParentTable);
 
-        // Check the current action
+        // Check the current action.
         switch (Input::get('act')) {
-            case 'paste':
-                // Allow paste
-                break;
-            case '':
-            case 'create':
-            case 'select':
-                // Check access to the article
-                if (!$this->checkAccessToElement(CURRENT_ID, $strParentTable, true)) {
-                    Backend::redirect('contao?act=error');
-                }
-                break;
-
             case 'editAll':
             case 'deleteAll':
             case 'overrideAll':
             case 'cutAll':
             case 'copyAll':
-                // Check access to the parent element if a content element is moved
-                if ((Input::get('act') == 'cutAll'
-                     || Input::get('act') == 'copyAll')
-                    && !$this->checkAccessToElement(\Input::get('pid'), $strParentTable)) {
-                    $this->redirect('contao?act=error');
-                }
-
                 $objCes = $this->connection
                     ->createQueryBuilder()
                     ->select('t.id')
@@ -309,91 +299,35 @@ class ArticleContent
                     ->where('t.ptable=:parentTable')
                     ->andWhere('t.pid=:currentId')
                     ->setParameter('parentTable', $strParentTable)
-                    ->setParameter('currentId', CURRENT_ID)
+                    ->setParameter('currentId', $dataContainer->currentPid)
                     ->executeQuery();
 
-                $session                   = $this->session->all();
-                $session['CURRENT']['IDS'] = \array_intersect(
-                    $session['CURRENT']['IDS'],
-                    $objCes->fetchEach('id')
+                $contaoBeSession = $this->session->getBag('contao_backend');
+                assert($contaoBeSession instanceof AttributeBagInterface);
+                $contaoBeSession->set(
+                    'CURRENT',
+                    \array_diff($contaoBeSession->get('CURRENT') ?? [], $objCes->fetchFirstColumn())
                 );
-                $this->session->replace($session);
                 break;
-
+            case 'paste':
+            case '':
+            case 'create':
+            case 'select':
             case 'cut':
             case 'copy':
-                // Check access to the parent element if a content element is moved
-                if (!$this->checkAccessToElement(Input::get('pid'), $strParentTable)) {
-                    Backend::redirect('contao?act=error');
-                }
-            // NO BREAK STATEMENT HERE
             default:
-                // Check access to the content element
-                if (!$this->checkAccessToElement(Input::get('id'), $strParentTable)) {
-                    Backend::redirect('contao?act=error');
-                }
-                break;
         }
     }
 
     /**
-     * Check access to a particular content element.
-     *
-     * @param int   $accessId Check ID.
-     *
-     * @param array $ptable   Parent Table.
-     *
-     * @param bool  $blnIsPid Is the ID a PID.
-     *
-     * @return bool
-     */
-    protected function checkAccessToElement(int $accessId, array $ptable, bool $blnIsPid = false)
-    {
-        $strScript = Environment::get('script');
-
-        // Workaround for missing ptable when called via Page/File Picker
-        if ($strScript != 'contao/page.php' && $strScript != 'contao/file.php') {
-            if ($blnIsPid) {
-                $objContent = $this->connection
-                    ->createQueryBuilder()
-                    ->select(1)
-                    ->from($ptable, 't')
-                    ->where('t.id=:id')
-                    ->setParameter('id', $accessId)
-                    ->setMaxResults(1)
-                    ->executeQuery();
-            } else {
-                $objContent = $this->connection
-                    ->createQueryBuilder()
-                    ->select(1)
-                    ->from('tl_content', 't')
-                    ->where('t.id=:id')
-                    ->andWhere('t.ptable=:ptable')
-                    ->setParameter('id', $accessId)
-                    ->setParameter('ptable', $ptable)
-                    ->setMaxResults(1)
-                    ->executeQuery();
-            }
-        }
-
-        // Invalid ID
-        if ($objContent->numRows < 1) {
-            System::log('Invalid content element ID ' . $accessId, __METHOD__, TL_ERROR);
-
-            return false;
-        }
-
-        return true;
-    }
-
-    /**
-     * Main Language Content.
+     * Main language content.
      *
      * @param DataContainer $dataContainer The DC Driver.
      *
      * @return void
+     * @throws Exception
      */
-    public function addMainLangContent(DataContainer $dataContainer)
+    public function addMainLangContent(DataContainer $dataContainer): void
     {
         $objMetaModel = $this->factory->getMetaModel($dataContainer->parentTable);
 
@@ -401,11 +335,16 @@ class ArticleContent
         $ptable          = $dataContainer->parentTable;
         $strSlot         = Input::get('slot');
         $strLanguage     = Input::get('lang');
-        $strMainLanguage = $objMetaModel->getFallbackLanguage();
 
-        // To DO Message::addError übersetzen
+        if ($objMetaModel instanceof ITranslatedMetaModel) {
+            $strMainLanguage = $objMetaModel->getMainLanguage();
+        } else {
+            $strMainLanguage = $objMetaModel->getFallbackLanguage();
+        }
+
+        // Check if same language.
         if ($strLanguage == $strMainLanguage) {
-            Message::addError('Hauptsprache kann nicht in die Hauptsprache kopiert werden.');
+            Message::addError($this->translator->trans('ERR.copy_same_language', [], 'contao_default'));
             Controller::redirect(\System::getReferer());
 
             return;
@@ -427,7 +366,7 @@ class ArticleContent
 
         $counter = 0;
 
-        while ($row = $objContent->fetch(\PDO::FETCH_ASSOC)) {
+        while ($row = $objContent->fetchAllAssociative()) {
             $arrContent            = $row;
             $arrContent['mm_lang'] = $strLanguage;
             unset($arrContent['id']);
@@ -441,8 +380,7 @@ class ArticleContent
             $counter++;
         }
 
-        // TO DO Message::addError übersetzen
-        Message::addInfo(sprintf('%s Element(e) kopiert', $counter));
+        Message::addInfo($this->translator->trans('MSC.copy_elements', [0 => $counter], 'contao_default'));
         Controller::redirect(\System::getReferer());
     }
 }
