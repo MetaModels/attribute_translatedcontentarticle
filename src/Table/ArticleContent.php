@@ -325,7 +325,10 @@ class ArticleContent
      * @param DataContainer $dataContainer The DC Driver.
      *
      * @return void
+     *
      * @throws Exception
+     *
+     * @deprecated The method does not work correctly and is too complex to implement.
      */
     public function addMainLangContent(DataContainer $dataContainer): void
     {
