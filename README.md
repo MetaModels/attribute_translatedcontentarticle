@@ -5,7 +5,10 @@
 
 # The translated content article attribute
 
-The translated content article attribute for MetaModels. With this attribute it is possible to select and arrange standard content elements of Contao like in a Contao article.
+The translated content article attribute for MetaModels. With this attribute it is possible to select and arrange
+standard content elements of Contao like in a Contao article.
+
+For members of a user group, the permissions apply to the content elements and fields released in the user group.
 
 ## Original idea by Byteworks:
 - [Ronny Binder](mailto:rb@bytworks.ch)

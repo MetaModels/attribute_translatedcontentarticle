@@ -1,15 +1,18 @@
 services:
-    MetaModels\AttributeTranslatedContentArticleBundle\Attribute\AttributeTypeFactory:
-        arguments:
-            - '@database_connection'
-            - '@metamodels.table_manipulator'
-        tags:
-            - { name: metamodels.attribute_factory }
-    MetaModels\AttributeTranslatedContentArticleBundle\Table\ArticleContent:
-      public: true
-      arguments:
-        - '@database_connection'
-    MetaModels\AttributeTranslatedContentArticleBundle\EventListener\BackendEventListener:
-      public: true
-      arguments:
-        - '@database_connection'
+  MetaModels\AttributeTranslatedContentArticleBundle\Attribute\AttributeTypeFactory:
+    arguments:
+      - '@database_connection'
+      - '@metamodels.table_manipulator'
+    tags:
+      - { name: metamodels.attribute_factory }
+  MetaModels\AttributeTranslatedContentArticleBundle\Table\ArticleContent:
+    public: true
+    arguments:
+      - '@database_connection'
+      - '@session'
+      - '@metamodels.factory'
+      - '@translator'
+  MetaModels\AttributeTranslatedContentArticleBundle\EventListener\BackendEventListener:
+    public: true
+    arguments:
+      - '@database_connection'
