@@ -3,7 +3,7 @@
 /**
  * This file is part of MetaModels/attribute_translatedcontentarticle.
  *
- * (c) 2012-2022 The MetaModels team.
+ * (c) 2012-2024 The MetaModels team.
  *
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
@@ -16,18 +16,19 @@
  * @author     Stefan Heimes <stefan_heimes@hotmail.com>
  * @author     Marc Reimann <reimann@mediendepot-ruhr.de>
  * @author     Ingolf Steinhardt <info@e-spin.de>
- * @copyright  2012-2022 The MetaModels team.
+ * @copyright  2012-2024 The MetaModels team.
  * @license    https://github.com/MetaModels/attribute_translatedcontentarticle/blob/master/LICENSE LGPL-3.0-or-later
  * @filesource
  */
 
-
 namespace MetaModels\AttributeTranslatedContentArticleBundle\Attribute;
 
 use Contao\Controller;
+use Contao\System;
 use MetaModels\AttributeTranslatedContentArticleBundle\Widgets\ContentArticleWidget;
 use MetaModels\Attribute\TranslatedReference;
 use MetaModels\ITranslatedMetaModel;
+use Symfony\Component\HttpFoundation\Request;
 
 /**
  * This is the AttributeTranslatedContentArticle class for handling article fields.
@@ -39,7 +40,7 @@ class TranslatedContentArticle extends TranslatedReference
      *
      * @var array
      */
-    private static $arrCallIds = [];
+    private static array $arrCallIds = [];
 
     /**
      * {@inheritdoc}
@@ -121,7 +122,9 @@ class TranslatedContentArticle extends TranslatedReference
             $strLanguage         = $strLangCode;
             $strFallbackLanguage = $model->getMainLanguage();
         } else {
-            $strLanguage         = $model->isTranslated() ? $strLangCode : '';
+            /** @psalm-suppress DeprecatedMethod */
+            $strLanguage = $model->isTranslated() ? $strLangCode : '';
+            /** @psalm-suppress DeprecatedMethod */
             $strFallbackLanguage = $model->isTranslated() ? $model->getFallbackLanguage() : '';
         }
 
@@ -135,12 +138,18 @@ class TranslatedContentArticle extends TranslatedReference
             static::$arrCallIds[$strCallId] = true;
 
             // Generate list for backend.
-            if (TL_MODE == 'BE') {
+            $isBackend = System::getContainer()
+                ->get('contao.routing.scope_matcher')
+                ?->isBackendRequest(
+                    System::getContainer()->get('request_stack')?->getCurrentRequest() ?? Request::create('')
+                );
+
+            if ($isBackend) {
                 $elements = $contentArticle->getContentTypesByRecordId($intId, $rootTable, $strColumn, $strLanguage);
                 $content  = '';
-                if (count($elements)) {
+                if (\count($elements)) {
                     $content .= '<ul class="elements_container">';
-                    foreach ((array) $elements as $element) {
+                    foreach ($elements as $element) {
                         // @codingStandardsIgnoreStart - one line template.
                         $content .= \sprintf(
                             '<li><div class="cte_type%s"><img src="system/themes/flexible/icons/%s.svg" width="16" height="16"> %s</div></li>',
@@ -161,18 +170,27 @@ class TranslatedContentArticle extends TranslatedReference
             }
 
             // Generate output for frontend.
-            if (TL_MODE == 'FE') {
-                $objContent         = \ContentModel::findPublishedByPidAndTable($intId, $strTable);
+            $isFrontend = System::getContainer()
+                ->get('contao.routing.scope_matcher')
+                ?->isFrontendRequest(
+                    System::getContainer()->get('request_stack')?->getCurrentRequest() ?? Request::create('')
+                );
+
+            if ($isFrontend) {
+                $objContent         = \ContentModel::findPublishedByPidAndTable((int) $intId, $strTable);
                 $arrContent         = [];
                 $arrContentFallback = [];
 
                 if ($objContent !== null) {
                     while ($objContent->next()) {
-                        if ($objContent->mm_slot == $strColumn && $objContent->mm_lang == $strLanguage) {
+                        /** @psalm-suppress UndefinedMagicPropertyFetch */
+                        if ($objContent->mm_slot === $strColumn && $objContent->mm_lang === $strLanguage) {
                             $arrContent[] = Controller::getContentElement($objContent->current());
-                        } elseif ($objContent->mm_slot == $strColumn
-                                  && $strLanguage != $strFallbackLanguage
-                                  && $objContent->mm_lang == $strFallbackLanguage
+                        } elseif (
+                            /** @psalm-suppress UndefinedMagicPropertyFetch */
+                            $objContent->mm_slot === $strColumn
+                                  && $strLanguage !== $strFallbackLanguage
+                                  && $objContent->mm_lang === $strFallbackLanguage
                         ) {
                             $arrContentFallback[] = Controller::getContentElement($objContent->current());
                         }
