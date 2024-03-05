@@ -23,6 +23,7 @@
 
 namespace MetaModels\AttributeTranslatedContentArticleBundle\Attribute;
 
+use Contao\ContentModel;
 use Contao\Controller;
 use Contao\System;
 use MetaModels\AttributeTranslatedContentArticleBundle\Widgets\ContentArticleWidget;
@@ -68,6 +69,7 @@ class TranslatedContentArticle extends TranslatedReference
     public function getFilterOptions($idList, $usedOnly, &$arrCount = null)
     {
         // Needed to fake implement BaseComplex.
+        return [];
     }
 
     /**
@@ -85,7 +87,6 @@ class TranslatedContentArticle extends TranslatedReference
     {
         // Needed to fake implement ITranslate.
     }
-
 
     /**
      * {@inheritdoc}
@@ -118,7 +119,7 @@ class TranslatedContentArticle extends TranslatedReference
         $contentArticle = new ContentArticleWidget();
         $rootTable      = $contentArticle->getRootMetaModelTable($strTable);
 
-        if ($this->getMetaModel() instanceof ITranslatedMetaModel) {
+        if ($model instanceof ITranslatedMetaModel) {
             $strLanguage         = $strLangCode;
             $strFallbackLanguage = $model->getMainLanguage();
         } else {
@@ -138,7 +139,7 @@ class TranslatedContentArticle extends TranslatedReference
             static::$arrCallIds[$strCallId] = true;
 
             // Generate list for backend.
-            $isBackend = System::getContainer()
+            $isBackend = (bool) System::getContainer()
                 ->get('contao.routing.scope_matcher')
                 ?->isBackendRequest(
                     System::getContainer()->get('request_stack')?->getCurrentRequest() ?? Request::create('')
@@ -170,14 +171,14 @@ class TranslatedContentArticle extends TranslatedReference
             }
 
             // Generate output for frontend.
-            $isFrontend = System::getContainer()
+            $isFrontend = (bool) System::getContainer()
                 ->get('contao.routing.scope_matcher')
                 ?->isFrontendRequest(
                     System::getContainer()->get('request_stack')?->getCurrentRequest() ?? Request::create('')
                 );
 
             if ($isFrontend) {
-                $objContent         = \ContentModel::findPublishedByPidAndTable((int) $intId, $strTable);
+                $objContent         = ContentModel::findPublishedByPidAndTable((int) $intId, $strTable);
                 $arrContent         = [];
                 $arrContentFallback = [];
 

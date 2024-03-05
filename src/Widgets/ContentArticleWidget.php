@@ -37,6 +37,8 @@ use Symfony\Contracts\Translation\TranslatorInterface;
  * Class ArticleWidget
  *
  * @package MetaModels\AttributeTranslatedContentArticleBundle\Widgets
+ *
+ * @psalm-suppress PropertyNotSetInConstructor
  */
 class ContentArticleWidget extends AbstractWidget
 {
@@ -290,7 +292,7 @@ class ContentArticleWidget extends AbstractWidget
             ];
         }
 
-        $getTable = function ($tableName) use (&$getTable, $tables) {
+        $getTable = static function (string $tableName) use (&$getTable, $tables): false|string {
             if (!isset($tables[$tableName])) {
                 return false;
             }
@@ -331,7 +333,7 @@ class ContentArticleWidget extends AbstractWidget
     ): array {
         $contentElements = [];
 
-        if (empty($recordId) || empty($ptableName)) {
+        if (null === $recordId || '' === $ptableName) {
             return $contentElements;
         }
 

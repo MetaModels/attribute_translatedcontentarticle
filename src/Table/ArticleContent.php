@@ -32,6 +32,7 @@ use Contao\System;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Exception;
 use MetaModels\Factory;
+use MetaModels\IMetaModel;
 use MetaModels\ITranslatedMetaModel;
 use Symfony\Component\HttpFoundation\Session\Attribute\AttributeBagInterface;
 use Symfony\Component\HttpFoundation\Session\Session;
@@ -158,7 +159,7 @@ class ArticleContent
      */
     public function save(DataContainer $dataContainer): void
     {
-        $lang = \Input::get('lang');
+        $lang = Input::get('lang');
         if (empty($lang)) {
             $lang = '';
         }
@@ -343,6 +344,7 @@ class ArticleContent
     {
         /** @psalm-suppress UndefinedMagicPropertyFetch */
         $objMetaModel = $this->factory->getMetaModel($dataContainer->parentTable);
+        assert($objMetaModel instanceof IMetaModel);
 
         $intId           = $dataContainer->id;
         $ptable          = $dataContainer->parentTable;
@@ -359,7 +361,7 @@ class ArticleContent
         // Check if same language.
         if ($strLanguage === $strMainLanguage) {
             Message::addError($this->translator->trans('ERR.copy_same_language', [], 'contao_default'));
-            Controller::redirect(\System::getReferer());
+            Controller::redirect(System::getReferer());
 
             return;
         }
