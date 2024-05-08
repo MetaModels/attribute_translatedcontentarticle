@@ -30,6 +30,7 @@ use ContaoCommunityAlliance\DcGeneral\Contao\Compatibility\DcCompat;
 use ContaoCommunityAlliance\DcGeneral\Contao\View\Contao2BackendView\ContaoBackendViewTemplate;
 use ContaoCommunityAlliance\DcGeneral\Contao\View\Contao2BackendView\Widget\AbstractWidget;
 use ContaoCommunityAlliance\DcGeneral\Data\MultiLanguageDataProviderInterface;
+use ContaoCommunityAlliance\Translator\TranslatorInterface as ccaTranslator;
 use Doctrine\DBAL\Connection;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
@@ -91,6 +92,8 @@ class ContentArticleWidget extends AbstractWidget
      */
     private Adapter|Input $input;
 
+    private TranslatorInterface $translator;
+
     /**
      * Compat layer.
      *
@@ -104,7 +107,7 @@ class ContentArticleWidget extends AbstractWidget
      * @inheritDoc
      */
     public function __construct(
-        $arrAttributes = null,
+        ?array $arrAttributes = null,
         DcCompat $dcCompat = null,
         Connection $connection = null,
         Adapter $input = null,
@@ -134,7 +137,7 @@ class ContentArticleWidget extends AbstractWidget
         }
         $this->input = $input;
 
-        if (null ===  $translator) {
+        if (null === $translator) {
             // @codingStandardsIgnoreStart
             @trigger_error(
                 'Translator is missing. It has to be passed in the constructor. Fallback will be dropped.',
@@ -149,6 +152,7 @@ class ContentArticleWidget extends AbstractWidget
 
         parent::__construct($arrAttributes, $dcCompat);
 
+        /** @psalm-suppress InternalMethod - Class Adapter is internal, not the __call() method. Blame Contao. */
         $currentID        = $this->input->get('id');
         $this->hasEmptyId = empty($currentID);
     }
@@ -204,7 +208,7 @@ class ContentArticleWidget extends AbstractWidget
             case 'subTemplate':
                 return isset($this->subTemplate);
             default:
-                return parent::__get($strKey);
+                return parent::__isset($strKey);
         }
     }
 
@@ -250,8 +254,11 @@ class ContentArticleWidget extends AbstractWidget
         $contentElements =
             $this->getContentTypesByRecordId($this->currentRecord, $rootTable, $this->strName, $currentLang);
 
+        $translator = $this->getEnvironment()->getTranslator();
+        assert($translator instanceof ccaTranslator);
+
         $content = (new ContaoBackendViewTemplate($this->subTemplate))
-            ->setTranslator($this->getEnvironment()->getTranslator())
+            ->setTranslator($translator)
             ->set('name', $this->strName)
             ->set('id', $this->strId)
             ->set('label', $this->label)
@@ -270,7 +277,7 @@ class ContentArticleWidget extends AbstractWidget
      *
      * @param string $tableName Table name to Check.
      *
-     * @return bool|string Returns RootMetaModelTable.
+     * @return string Returns RootMetaModelTable.
      *
      * @throws \Exception Throws an Exception.
      */
@@ -292,9 +299,9 @@ class ContentArticleWidget extends AbstractWidget
             ];
         }
 
-        $getTable = static function (string $tableName) use (&$getTable, $tables): false|string {
+        $getTable = static function (string $tableName) use (&$getTable, $tables): string {
             if (!isset($tables[$tableName])) {
-                return false;
+                return '';
             }
 
             $arrTable = $tables[$tableName];

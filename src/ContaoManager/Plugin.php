@@ -38,6 +38,7 @@ class Plugin implements BundlePluginInterface
      */
     public function getBundles(ParserInterface $parser)
     {
+        /** @psalm-suppress UndefinedClass */
         return [
             BundleConfig::create(MetaModelsAttributeTranslatedContentArticleBundle::class)
                         ->setLoadAfter(

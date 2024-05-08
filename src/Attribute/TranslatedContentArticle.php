@@ -25,6 +25,7 @@ namespace MetaModels\AttributeTranslatedContentArticleBundle\Attribute;
 
 use Contao\ContentModel;
 use Contao\Controller;
+use Contao\Model\Collection;
 use Contao\System;
 use MetaModels\AttributeTranslatedContentArticleBundle\Widgets\ContentArticleWidget;
 use MetaModels\Attribute\TranslatedReference;
@@ -146,7 +147,12 @@ class TranslatedContentArticle extends TranslatedReference
                 );
 
             if ($isBackend) {
-                $elements = $contentArticle->getContentTypesByRecordId($intId, $rootTable, $strColumn, $strLanguage);
+                $elements = $contentArticle->getContentTypesByRecordId(
+                    (int) $intId,
+                    $rootTable,
+                    $strColumn,
+                    $strLanguage
+                );
                 $content  = '';
                 if (\count($elements)) {
                     $content .= '<ul class="elements_container">';
@@ -183,6 +189,7 @@ class TranslatedContentArticle extends TranslatedReference
                 $arrContentFallback = [];
 
                 if ($objContent !== null) {
+                    assert($objContent instanceof Collection);
                     while ($objContent->next()) {
                         /** @psalm-suppress UndefinedMagicPropertyFetch */
                         if ($objContent->mm_slot === $strColumn && $objContent->mm_lang === $strLanguage) {

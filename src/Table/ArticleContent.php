@@ -144,6 +144,7 @@ class ArticleContent
      */
     public function toggleIcon(): string
     {
+        /** @psalm-suppress UndefinedClass */
         $controller = new \tl_content();
 
         return \call_user_func_array([$controller, 'toggleIcon'], \func_get_args());
@@ -194,20 +195,7 @@ class ArticleContent
         $slot   = Input::get('slot');
         $lang   = Input::get('lang');
 
-        if (empty($pid) || empty($ptable) || empty($slot)) {
-            $errorCode  = 'Could not update row because one of the data are missing. ';
-            $errorCode .= 'Insert ID: %s, Pid: %s, Parent table: %s, Slot: %s, Lang: %s';
-            throw new \RuntimeException(
-                \sprintf(
-                    $errorCode,
-                    $insertId,
-                    $pid,
-                    $ptable,
-                    $slot,
-                    $lang
-                )
-            );
-        }
+        $this->assertValidData($pid, $ptable, $slot, $insertId, $lang);
 
         $this->connection
             ->createQueryBuilder()
@@ -240,22 +228,9 @@ class ArticleContent
         $ptable   = Input::get('ptable');
         $slot     = Input::get('slot');
         $lang     = Input::get('lang');
-        $insertId = $dataContainer->id;
+        $insertId = (string) $dataContainer->id;
 
-        if (empty($pid) || empty($ptable) || empty($slot)) {
-            $errorCode  = 'Could not update row because one of the data are missing. ';
-            $errorCode .= 'Insert ID: %s, Pid: %s, Parent table: %s, Slot: %s, Lang: %s';
-            throw new \RuntimeException(
-                \sprintf(
-                    $errorCode,
-                    $insertId,
-                    $pid,
-                    $ptable,
-                    $slot,
-                    $lang
-                )
-            );
-        }
+        $this->assertValidData($pid, $ptable, $slot, $insertId, $lang);
 
         $this->connection
             ->createQueryBuilder()
@@ -398,5 +373,23 @@ class ArticleContent
 
         Message::addInfo($this->translator->trans('MSC.copy_elements', [0 => $counter], 'contao_default'));
         Controller::redirect(\System::getReferer());
+    }
+
+    public function assertValidData(string $pid, string $ptable, string $slot, string $insertId, string $lang): void
+    {
+        if (empty($pid) || empty($ptable) || empty($slot)) {
+            $errorCode = 'Could not update row because one of the data are missing. ';
+            $errorCode .= 'Insert ID: %s, Pid: %s, Parent table: %s, Slot: %s, Lang: %s';
+            throw new \RuntimeException(
+                \sprintf(
+                    $errorCode,
+                    $insertId,
+                    $pid,
+                    $ptable,
+                    $slot,
+                    $lang
+                )
+            );
+        }
     }
 }
