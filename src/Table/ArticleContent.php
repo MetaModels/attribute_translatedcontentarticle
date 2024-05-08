@@ -3,7 +3,7 @@
 /**
  * This file is part of MetaModels/attribute_translatedcontentarticle.
  *
- * (c) 2012-2023 The MetaModels team.
+ * (c) 2012-2024 The MetaModels team.
  *
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
@@ -16,7 +16,7 @@
  * @author     Ingolf Steinhardt <info@e-spin.de>
  * @author     Stefan Heimes <stefan_heimes@hotmail.com>
  * @author     Marc Reimann <reimann@mediendepot-ruhr.de>
- * @copyright  2012-2023 The MetaModels team.
+ * @copyright  2012-2024 The MetaModels team.
  * @license    https://github.com/MetaModels/attribute_translatedcontentarticle/blob/master/LICENSE LGPL-3.0-or-later
  * @filesource
  */
@@ -32,6 +32,7 @@ use Contao\System;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Exception;
 use MetaModels\Factory;
+use MetaModels\IMetaModel;
 use MetaModels\ITranslatedMetaModel;
 use Symfony\Component\HttpFoundation\Session\Attribute\AttributeBagInterface;
 use Symfony\Component\HttpFoundation\Session\Session;
@@ -39,15 +40,17 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
  * Provide miscellaneous methods that are used by the data configuration array.
+ *
+ * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  */
 class ArticleContent
 {
     /**
      * The database connection.
      *
-     * @var Connection|null
+     * @var Connection
      */
-    private Connection|null $connection;
+    private Connection $connection;
 
     /**
      * Symfony session object.
@@ -59,9 +62,9 @@ class ArticleContent
     /**
      * MetaModels factory.
      *
-     * @var Factory|null
+     * @var Factory
      */
-    private Factory|null $factory;
+    private Factory $factory;
 
     /**
      * The translator interface.
@@ -84,17 +87,19 @@ class ArticleContent
         Factory $factory = null,
         TranslatorInterface $translator = null
     ) {
-        if (null === ($this->connection = $connection)) {
+        if (null === $connection) {
             // @codingStandardsIgnoreStart
             @trigger_error(
                 'Connection is missing. It has to be passed in the constructor. Fallback will be dropped.',
                 E_USER_DEPRECATED
             );
             // @codingStandardsIgnoreEnd
-            $this->connection = System::getContainer()->get('database_connection');
+            $connection = System::getContainer()->get('database_connection');
+            assert($connection instanceof Connection);
         }
+        $this->connection = $connection;
 
-        if (null === ($this->session = $session)) {
+        if (null === $session) {
             // @codingStandardsIgnoreStart
             @trigger_error(
                 'Not passing an "Session" is deprecated.',
@@ -103,10 +108,10 @@ class ArticleContent
             // @codingStandardsIgnoreEnd
             $session = System::getContainer()->get('session');
             assert($session instanceof Session);
-            $this->session = $session;
         }
+        $this->session = $session;
 
-        if (null === ($this->factory = $factory)) {
+        if (null === $factory) {
             // @codingStandardsIgnoreStart
             @trigger_error(
                 'Not passing an "Factory" is deprecated.',
@@ -115,18 +120,21 @@ class ArticleContent
             // @codingStandardsIgnoreEnd
             $factory = System::getContainer()->get('metamodels.factory');
             assert($factory instanceof Factory);
-            $this->factory = $factory;
         }
+        $this->factory = $factory;
 
-        if (null === $this->translator = $translator) {
+        if (null ===  $translator) {
             // @codingStandardsIgnoreStart
             @trigger_error(
                 'Translator is missing. It has to be passed in the constructor. Fallback will be dropped.',
                 E_USER_DEPRECATED
             );
             // @codingStandardsIgnoreEnd
-            $this->translator = System::getContainer()->get('translator');
+
+            $translator = System::getContainer()->get('translator');
+            assert($translator instanceof TranslatorInterface);
         }
+        $this->translator = $translator;
     }
 
     /**
@@ -136,6 +144,7 @@ class ArticleContent
      */
     public function toggleIcon(): string
     {
+        /** @psalm-suppress UndefinedClass */
         $controller = new \tl_content();
 
         return \call_user_func_array([$controller, 'toggleIcon'], \func_get_args());
@@ -151,7 +160,7 @@ class ArticleContent
      */
     public function save(DataContainer $dataContainer): void
     {
-        $lang = \Input::get('lang');
+        $lang = Input::get('lang');
         if (empty($lang)) {
             $lang = '';
         }
@@ -186,20 +195,7 @@ class ArticleContent
         $slot   = Input::get('slot');
         $lang   = Input::get('lang');
 
-        if (empty($pid) || empty($ptable) || empty($slot)) {
-            $errorCode  = 'Could not update row because one of the data are missing. ';
-            $errorCode .= 'Insert ID: %s, Pid: %s, Parent table: %s, Slot: %s, Lang: %s';
-            throw new \RuntimeException(
-                \sprintf(
-                    $errorCode,
-                    $insertId,
-                    $pid,
-                    $ptable,
-                    $slot,
-                    $lang
-                )
-            );
-        }
+        $this->assertValidData($pid, $ptable, $slot, $insertId, $lang);
 
         $this->connection
             ->createQueryBuilder()
@@ -232,22 +228,9 @@ class ArticleContent
         $ptable   = Input::get('ptable');
         $slot     = Input::get('slot');
         $lang     = Input::get('lang');
-        $insertId = $dataContainer->id;
+        $insertId = (string) $dataContainer->id;
 
-        if (empty($pid) || empty($ptable) || empty($slot)) {
-            $errorCode  = 'Could not update row because one of the data are missing. ';
-            $errorCode .= 'Insert ID: %s, Pid: %s, Parent table: %s, Slot: %s, Lang: %s';
-            throw new \RuntimeException(
-                \sprintf(
-                    $errorCode,
-                    $insertId,
-                    $pid,
-                    $ptable,
-                    $slot,
-                    $lang
-                )
-            );
-        }
+        $this->assertValidData($pid, $ptable, $slot, $insertId, $lang);
 
         $this->connection
             ->createQueryBuilder()
@@ -278,6 +261,7 @@ class ArticleContent
      */
     public function checkPermission(DataContainer $dataContainer): void
     {
+        /** @psalm-suppress UndefinedMagicPropertyFetch */
         if (BackendUser::getInstance()->isAdmin) {
             return;
         }
@@ -292,6 +276,7 @@ class ArticleContent
             case 'overrideAll':
             case 'cutAll':
             case 'copyAll':
+                /** @psalm-suppress UndefinedMagicPropertyFetch */
                 $objCes = $this->connection
                     ->createQueryBuilder()
                     ->select('t.id')
@@ -332,7 +317,9 @@ class ArticleContent
      */
     public function addMainLangContent(DataContainer $dataContainer): void
     {
+        /** @psalm-suppress UndefinedMagicPropertyFetch */
         $objMetaModel = $this->factory->getMetaModel($dataContainer->parentTable);
+        assert($objMetaModel instanceof IMetaModel);
 
         $intId           = $dataContainer->id;
         $ptable          = $dataContainer->parentTable;
@@ -342,13 +329,14 @@ class ArticleContent
         if ($objMetaModel instanceof ITranslatedMetaModel) {
             $strMainLanguage = $objMetaModel->getMainLanguage();
         } else {
+            /** @psalm-suppress DeprecatedMethod */
             $strMainLanguage = $objMetaModel->getFallbackLanguage();
         }
 
         // Check if same language.
-        if ($strLanguage == $strMainLanguage) {
+        if ($strLanguage === $strMainLanguage) {
             Message::addError($this->translator->trans('ERR.copy_same_language', [], 'contao_default'));
-            Controller::redirect(\System::getReferer());
+            Controller::redirect(System::getReferer());
 
             return;
         }
@@ -385,5 +373,23 @@ class ArticleContent
 
         Message::addInfo($this->translator->trans('MSC.copy_elements', [0 => $counter], 'contao_default'));
         Controller::redirect(\System::getReferer());
+    }
+
+    public function assertValidData(string $pid, string $ptable, string $slot, string $insertId, string $lang): void
+    {
+        if (empty($pid) || empty($ptable) || empty($slot)) {
+            $errorCode = 'Could not update row because one of the data are missing. ';
+            $errorCode .= 'Insert ID: %s, Pid: %s, Parent table: %s, Slot: %s, Lang: %s';
+            throw new \RuntimeException(
+                \sprintf(
+                    $errorCode,
+                    $insertId,
+                    $pid,
+                    $ptable,
+                    $slot,
+                    $lang
+                )
+            );
+        }
     }
 }
