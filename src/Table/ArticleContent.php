@@ -335,7 +335,7 @@ class ArticleContent
 
         // Check if same language.
         if ($strLanguage === $strMainLanguage) {
-            Message::addError($this->translator->trans('ERR.copy_same_language', [], 'contao_default'));
+            Message::addError($this->translator->trans('ERR.copy_same_language', [], 'tl_metamodel_attribute'));
             Controller::redirect(System::getReferer());
 
             return;
@@ -371,7 +371,7 @@ class ArticleContent
             $counter++;
         }
 
-        Message::addInfo($this->translator->trans('MSC.copy_elements', [0 => $counter], 'contao_default'));
+        Message::addInfo($this->translator->trans('copy_elements', ['%items%' => $counter], 'tl_metamodel_attribute'));
         Controller::redirect(\System::getReferer());
     }
 

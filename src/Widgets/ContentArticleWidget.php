@@ -259,6 +259,7 @@ class ContentArticleWidget extends AbstractWidget
 
         $content = (new ContaoBackendViewTemplate($this->subTemplate))
             ->setTranslator($translator)
+            ->set('translator', $this->translator)
             ->set('name', $this->strName)
             ->set('id', $this->strId)
             ->set('label', $this->label)
