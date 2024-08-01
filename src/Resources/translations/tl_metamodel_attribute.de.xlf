@@ -3,7 +3,7 @@
     <body>
       <trans-unit id="typeOptions.translatedcontentarticle" resname="typeOptions.translatedcontentarticle">
         <source>Translated content article</source>
-        <target>Übersetzter Content Artikel</target>
+        <target>Übersetzter Inhalt eines Artikels</target>
       </trans-unit>
       <trans-unit id="missing_id" resname="missing_id">
         <source>You must save the main data set before you can create new data.</source>
