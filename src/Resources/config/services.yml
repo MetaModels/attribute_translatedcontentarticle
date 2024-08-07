@@ -5,14 +5,11 @@ services:
       - '@metamodels.table_manipulator'
     tags:
       - { name: metamodels.attribute_factory }
-  MetaModels\AttributeTranslatedContentArticleBundle\Table\ArticleContent:
-    public: true
-    arguments:
-      - '@database_connection'
-      - '@session'
-      - '@metamodels.factory'
-      - '@translator'
+
   MetaModels\AttributeTranslatedContentArticleBundle\EventListener\BackendEventListener:
     public: true
     arguments:
       - '@database_connection'
+
+  MetaModels\AttributeTranslatedContentArticleBundle\Controller\Backend\MetaModelController:
+    tags: ['controller.service_arguments']
