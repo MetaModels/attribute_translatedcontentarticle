@@ -19,14 +19,3 @@ services:
       - name: kernel.event_listener
         event: 'dc-general.view.contao2backend.get-property-options'
         method: getOptions
-  MetaModels\AttributeTranslatedContentArticleBundle\EventListener\InitializeListener:
-    public: false
-    arguments:
-      - "@security.token_storage"
-      - "@security.authentication.trust_resolver"
-      - "@contao.routing.scope_matcher"
-      - "@metamodels.view_combination"
-    tags:
-      - name: kernel.event_listener
-        event: kernel.request
-        priority: -601

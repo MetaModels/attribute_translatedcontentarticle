@@ -32,6 +32,9 @@ use ContaoCommunityAlliance\DcGeneral\Contao\View\Contao2BackendView\Widget\Abst
 use ContaoCommunityAlliance\DcGeneral\Data\MultiLanguageDataProviderInterface;
 use ContaoCommunityAlliance\Translator\TranslatorInterface as ccaTranslator;
 use Doctrine\DBAL\Connection;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\RequestStack;
+use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
@@ -223,10 +226,15 @@ class ContentArticleWidget extends AbstractWidget
      */
     public function generate()
     {
+        $requestStack = System::getContainer()->get('request_stack');
+        assert($requestStack instanceof RequestStack);
+        $request = $requestStack->getCurrentRequest();
+        assert($request instanceof Request);
+
         // Retrieve current language.
         $currentLang = '';
         if (Environment::get('isAjaxRequest')) {
-            $currentLang = Input::post('lang');
+            $currentLang = $request->request->get('lang');
         } else {
             $dataProvider = $this->getEnvironment()->getDataProvider();
             if ($dataProvider instanceof MultiLanguageDataProviderInterface) {
@@ -235,21 +243,22 @@ class ContentArticleWidget extends AbstractWidget
         }
 
         $rootTable    = $this->getRootMetaModelTable($this->strTable);
-        $requestToken = System::getContainer()->get('contao.csrf.token_manager')?->getDefaultTokenValue();
 
-        $strQuery = \http_build_query([
-                                         'do'          => 'metamodel_' . ($rootTable ?: 'table_not_found'),
-                                         'table'       => 'tl_content',
-                                         'ptable'      => $this->strTable,
-                                         'id'          => $this->currentRecord,
-                                         'mid'         => $this->currentRecord,
-                                         'slot'        => $this->strName,
-                                         'lang'        => $currentLang,
-                                         'popup'       => 1,
-                                         'nb'          => 1,
-                                         'langSupport' => 1,
-                                         'rt'          => $requestToken,
-                                     ]);
+        $urlGenerator = System::getContainer()->get('router');
+        assert($urlGenerator instanceof UrlGeneratorInterface);
+
+        $url = $urlGenerator->generate(
+            'metamodels.translated-content-article',
+            [
+                'tableName' => $rootTable,
+                'attribute' => $this->strName,
+                'itemId' => (string) $this->currentRecord,
+                'lang' => $currentLang,
+                'id' => (string) $this->currentRecord,
+                'ref' => $request->attributes->get('_contao_referer_id'),
+                'rt' => System::getContainer()->get('contao.csrf.token_manager')?->getDefaultTokenValue() ?? ''
+            ]
+        );
 
         $contentElements =
             $this->getContentTypesByRecordId($this->currentRecord, $rootTable, $this->strName, $currentLang);
@@ -265,7 +274,7 @@ class ContentArticleWidget extends AbstractWidget
             ->set('label', $this->label)
             ->set('readonly', $this->readonly)
             ->set('hasEmptyId', $this->hasEmptyId)
-            ->set('link', 'contao?' . $strQuery)
+            ->set('link', $url)
             ->set('elements', $contentElements)
             ->set('lang', $currentLang)
             ->parse();
