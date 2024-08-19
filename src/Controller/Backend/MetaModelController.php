@@ -36,7 +36,6 @@ use Doctrine\DBAL\Exception;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\Session\Attribute\AttributeBagInterface;
-use Symfony\Component\HttpFoundation\Session\Session;
 use Symfony\Component\HttpFoundation\Session\SessionInterface;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\Security\Core\Security;
@@ -192,7 +191,14 @@ class MetaModelController
     ): void {
         $GLOBALS['TL_DCA']['tl_content']['config']['onsubmit_callback'][] =
             function (DataContainer $dataContainer) use ($parent, $itemId, $attribute, $lang, $connection): void {
-                $this->updateContentElement($connection, $itemId, $parent, $attribute, $lang, (string) $dataContainer->id);
+                $this->updateContentElement(
+                    $connection,
+                    $itemId,
+                    $parent,
+                    $attribute,
+                    $lang,
+                    (string) $dataContainer->id
+                );
             };
         $GLOBALS['TL_DCA']['tl_content']['config']['oncopy_callback'][]   =
             $this->slotSetterCallback($parent, $attribute, $lang, $itemId, $connection);
@@ -234,12 +240,12 @@ class MetaModelController
     /**
      * Check permissions to edit table tl_content.
      *
-     * @param string     $action
-     * @param string     $parent
-     * @param string     $itemId
-     * @param Connection $connection
-     * @param Session    $session
-     * @param Security   $security
+     * @param string           $action
+     * @param string           $parent
+     * @param string           $itemId
+     * @param Connection       $connection
+     * @param SessionInterface $session
+     * @param Security         $security
      *
      * @return callable
      *
