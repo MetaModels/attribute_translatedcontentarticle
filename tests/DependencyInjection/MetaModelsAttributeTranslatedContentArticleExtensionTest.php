@@ -25,12 +25,11 @@ declare(strict_types=1);
 namespace DependencyInjection;
 
 // phpcs:disable
+use MetaModels\AttributeTranslatedContentArticleBundle\Controller\Backend\MetaModelController;
 use MetaModels\AttributeTranslatedContentArticleBundle\Attribute\AttributeTypeFactory;
 use MetaModels\AttributeTranslatedContentArticleBundle\EventListener\BackendEventListener;
 use MetaModels\AttributeTranslatedContentArticleBundle\EventListener\GetOptionsListener;
-use MetaModels\AttributeTranslatedContentArticleBundle\EventListener\InitializeListener;
 use MetaModels\AttributeTranslatedContentArticleBundle\DependencyInjection\MetaModelsAttributeTranslatedContentArticleExtension;
-use MetaModels\AttributeTranslatedContentArticleBundle\Table\ArticleContent;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 // phpcs:enable
@@ -47,7 +46,6 @@ class MetaModelsAttributeTranslatedContentArticleExtensionTest extends TestCase
     public function testLoad(): void
     {
         $container = new ContainerBuilder();
-
         $extension = new MetaModelsAttributeTranslatedContentArticleExtension();
         $extension->load([], $container);
 
@@ -55,9 +53,8 @@ class MetaModelsAttributeTranslatedContentArticleExtensionTest extends TestCase
             'service_container',
             BackendEventListener::class,
             GetOptionsListener::class,
-            InitializeListener::class,
             AttributeTypeFactory::class,
-            ArticleContent::class
+            MetaModelController::class,
         ];
 
         self::assertCount(count($expectedDefinitions), $container->getDefinitions());
