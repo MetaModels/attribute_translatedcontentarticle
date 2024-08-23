@@ -42,6 +42,7 @@ use Symfony\Contracts\Translation\TranslatorInterface;
  *
  * @package MetaModels\AttributeTranslatedContentArticleBundle\Widgets
  *
+ * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  * @psalm-suppress PropertyNotSetInConstructor
  */
 class ContentArticleWidget extends AbstractWidget
@@ -234,7 +235,7 @@ class ContentArticleWidget extends AbstractWidget
         // Retrieve current language.
         $currentLang = '';
         if (Environment::get('isAjaxRequest')) {
-            $currentLang = $request->request->get('lang');
+            $currentLang = (string) $request->request->get('lang');
         } else {
             $dataProvider = $this->getEnvironment()->getDataProvider();
             if ($dataProvider instanceof MultiLanguageDataProviderInterface) {
@@ -252,11 +253,11 @@ class ContentArticleWidget extends AbstractWidget
             [
                 'tableName' => $rootTable,
                 'attribute' => $this->strName,
-                'itemId' => (string) $this->currentRecord,
-                'lang' => $currentLang,
-                'id' => (string) $this->currentRecord,
-                'ref' => $request->attributes->get('_contao_referer_id'),
-                'rt' => System::getContainer()->get('contao.csrf.token_manager')?->getDefaultTokenValue() ?? ''
+                'itemId'    => (string) $this->currentRecord,
+                'lang'      => $currentLang,
+                'id'        => (string) $this->currentRecord,
+                'ref'       => $request->attributes->get('_contao_referer_id'),
+                'rt'        => System::getContainer()->get('contao.csrf.token_manager')?->getDefaultTokenValue() ?? ''
             ]
         );
 
