@@ -113,12 +113,10 @@ class TranslatedContentArticle extends TranslatedReference
      */
     public function getTranslatedDataFor($arrIds, $strLangCode)
     {
-        $strTable       = $this->getMetaModel()->getTableName();
-        $strColumn      = $this->getColName();
-        $model          = $this->getMetaModel();
-        $arrData        = [];
-        $contentArticle = new ContentArticleWidget();
-        $rootTable      = $contentArticle->getRootMetaModelTable($strTable);
+        $strTable  = $this->getMetaModel()->getTableName();
+        $strColumn = $this->getColName();
+        $model     = $this->getMetaModel();
+        $arrData   = [];
 
         if ($model instanceof ITranslatedMetaModel) {
             $strLanguage         = $strLangCode;
@@ -131,7 +129,7 @@ class TranslatedContentArticle extends TranslatedReference
         }
 
         foreach ($arrIds as $intId) {
-            // Continue if it's a recursive call
+            // Continue if it's a recursive call.
             $strCallId = $strTable . '_' . $strColumn . '_' . $strLanguage . '_' . $intId;
             if (isset(static::$arrCallIds[$strCallId])) {
                 $arrData[$intId]['value'] = \sprintf('RECURSION: %s', $strCallId);
@@ -139,79 +137,33 @@ class TranslatedContentArticle extends TranslatedReference
             }
             static::$arrCallIds[$strCallId] = true;
 
-            // Generate list for backend.
-            $isBackend = (bool) System::getContainer()
-                ->get('contao.routing.scope_matcher')
-                ?->isBackendRequest(
-                    System::getContainer()->get('request_stack')?->getCurrentRequest() ?? Request::create('')
-                );
+            $objContent         = ContentModel::findPublishedByPidAndTable((int) $intId, $strTable);
+            $arrContent         = [];
+            $arrContentFallback = [];
 
-            if ($isBackend) {
-                $elements = $contentArticle->getContentTypesByRecordId(
-                    (int) $intId,
-                    $rootTable,
-                    $strColumn,
-                    $strLanguage
-                );
-                $content  = '';
-                if (\count($elements)) {
-                    $content .= '<ul class="elements_container">';
-                    foreach ($elements as $element) {
-                        // @codingStandardsIgnoreStart - one line template.
-                        $content .= \sprintf(
-                            '<li><div class="cte_type%s"><img src="system/themes/flexible/icons/%s.svg" width="16" height="16"> %s</div></li>',
-                            $element['isInvisible'] ? ' unpublished' : ' published',
-                            $element['isInvisible'] ? 'invisible' : 'visible',
-                            $element['name']
-                        );
-                        // @codingStandardsIgnoreEnd
+            if ($objContent !== null) {
+                assert($objContent instanceof Collection);
+                while ($objContent->next()) {
+                    /** @psalm-suppress UndefinedMagicPropertyFetch */
+                    if ($objContent->mm_slot === $strColumn && $objContent->mm_lang === $strLanguage) {
+                        $arrContent[] = Controller::getContentElement($objContent->current());
+                    } elseif (
+                        /** @psalm-suppress UndefinedMagicPropertyFetch */
+                        $objContent->mm_slot === $strColumn
+                        && $strLanguage !== $strFallbackLanguage
+                        && $objContent->mm_lang === $strFallbackLanguage
+                    ) {
+                        $arrContentFallback[] = Controller::getContentElement($objContent->current());
                     }
-                    $content .= '</ul>';
-                }
-
-                if (!empty($content)) {
-                    $arrData[$intId]['value'] = [$content];
-                } else {
-                    $arrData[$intId]['value'] = [];
                 }
             }
 
-            // Generate output for frontend.
-            $isFrontend = (bool) System::getContainer()
-                ->get('contao.routing.scope_matcher')
-                ?->isFrontendRequest(
-                    System::getContainer()->get('request_stack')?->getCurrentRequest() ?? Request::create('')
-                );
-
-            if ($isFrontend) {
-                $objContent         = ContentModel::findPublishedByPidAndTable((int) $intId, $strTable);
-                $arrContent         = [];
-                $arrContentFallback = [];
-
-                if ($objContent !== null) {
-                    assert($objContent instanceof Collection);
-                    while ($objContent->next()) {
-                        /** @psalm-suppress UndefinedMagicPropertyFetch */
-                        if ($objContent->mm_slot === $strColumn && $objContent->mm_lang === $strLanguage) {
-                            $arrContent[] = Controller::getContentElement($objContent->current());
-                        } elseif (
-                            /** @psalm-suppress UndefinedMagicPropertyFetch */
-                            $objContent->mm_slot === $strColumn
-                                  && $strLanguage !== $strFallbackLanguage
-                                  && $objContent->mm_lang === $strFallbackLanguage
-                        ) {
-                            $arrContentFallback[] = Controller::getContentElement($objContent->current());
-                        }
-                    }
-                }
-
-                if (!empty($arrContent)) {
-                    $arrData[$intId]['value'] = $arrContent;
-                } elseif (!empty($arrContentFallback)) {
-                    $arrData[$intId]['value'] = $arrContentFallback;
-                } else {
-                    $arrData[$intId]['value'] = [];
-                }
+            if (!empty($arrContent)) {
+                $arrData[$intId]['value'] = $arrContent;
+            } elseif (!empty($arrContentFallback)) {
+                $arrData[$intId]['value'] = $arrContentFallback;
+            } else {
+                $arrData[$intId]['value'] = [];
             }
 
             unset(static::$arrCallIds[$strCallId]);
