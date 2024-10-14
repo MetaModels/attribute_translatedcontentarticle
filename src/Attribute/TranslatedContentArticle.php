@@ -26,11 +26,8 @@ namespace MetaModels\AttributeTranslatedContentArticleBundle\Attribute;
 use Contao\ContentModel;
 use Contao\Controller;
 use Contao\Model\Collection;
-use Contao\System;
-use MetaModels\AttributeTranslatedContentArticleBundle\Widgets\ContentArticleWidget;
 use MetaModels\Attribute\TranslatedReference;
 use MetaModels\ITranslatedMetaModel;
-use Symfony\Component\HttpFoundation\Request;
 
 /**
  * This is the AttributeTranslatedContentArticle class for handling article fields.
