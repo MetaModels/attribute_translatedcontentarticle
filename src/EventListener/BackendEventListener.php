@@ -171,6 +171,7 @@ class BackendEventListener
         $dataProvider = $event->getEnvironment()->getDataProvider($event->getModel()->getProviderName());
         $language     = $dataProvider->getCurrentLanguage() ?: '-';
 
+        /** @psalm-suppress UndefinedMagicPropertyAssignment */
         $event->getWidget()->lang = $language;
     }
 }
