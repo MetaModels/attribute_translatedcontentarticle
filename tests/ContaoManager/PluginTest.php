@@ -25,7 +25,6 @@ namespace ContaoManager;
 
 use Contao\ManagerPlugin\Bundle\Config\ConfigInterface;
 use Contao\ManagerPlugin\Bundle\Parser\ParserInterface;
-use MetaModels\AttributeContentArticleBundle\MetaModelsAttributeContentArticleBundle;
 use MetaModels\AttributeTranslatedContentArticleBundle\ContaoManager\Plugin;
 use MetaModels\AttributeTranslatedContentArticleBundle\MetaModelsAttributeTranslatedContentArticleBundle;
 use MetaModels\CoreBundle\MetaModelsCoreBundle;
@@ -48,7 +47,7 @@ class PluginTest extends TestCase
         $config
             ->expects(self::once())
             ->method('getLoadAfter')
-            ->willReturn([MetaModelsAttributeContentArticleBundle::class, MetaModelsCoreBundle::class]);
+            ->willReturn([MetaModelsCoreBundle::class]);
         $config
             ->expects(self::once())
             ->method('getReplace')

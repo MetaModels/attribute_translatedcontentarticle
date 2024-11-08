@@ -30,6 +30,7 @@ use MetaModels\AttributeTranslatedContentArticleBundle\Attribute\AttributeTypeFa
 use MetaModels\AttributeTranslatedContentArticleBundle\EventListener\BackendEventListener;
 use MetaModels\AttributeTranslatedContentArticleBundle\EventListener\GetOptionsListener;
 use MetaModels\AttributeTranslatedContentArticleBundle\DependencyInjection\MetaModelsAttributeTranslatedContentArticleExtension;
+use MetaModels\AttributeTranslatedContentArticleBundle\FileUsage\FileUsageProvider;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 // phpcs:enable
@@ -55,6 +56,7 @@ class MetaModelsAttributeTranslatedContentArticleExtensionTest extends TestCase
             GetOptionsListener::class,
             AttributeTypeFactory::class,
             MetaModelController::class,
+            FileUsageProvider::class
         ];
 
         self::assertCount(count($expectedDefinitions), $container->getDefinitions());
