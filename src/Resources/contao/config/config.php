@@ -19,7 +19,6 @@
  * @filesource
  */
 
-
 // Register backend form fields.
 use MetaModels\AttributeTranslatedContentArticleBundle\Widgets\ContentArticleWidget;
 

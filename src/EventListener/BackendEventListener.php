@@ -3,7 +3,7 @@
 /**
  * This file is part of MetaModels/attribute_translatedcontentarticle.
  *
- * (c) 2012-2022 The MetaModels team.
+ * (c) 2012-2024 The MetaModels team.
  *
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
@@ -15,7 +15,7 @@
  * @author     Andreas Dziemba <adziemba@web.de>
  * @author     Stefan Heimes <stefan_heimes@hotmail.com>
  * @author     Ingolf Steinhardt <info@e-spin.de>
- * @copyright  2012-2022 The MetaModels team.
+ * @copyright  2012-2024 The MetaModels team.
  * @license    https://github.com/MetaModels/attribute_translatedcontentarticle/blob/master/LICENSE LGPL-3.0-or-later
  * @filesource
  */
@@ -32,6 +32,8 @@ use MetaModels\DcGeneral\Data\Model;
 
 /**
  * Handles event operations on tl_metamodel_dcasetting.
+ *
+ * @SuppressWarnings(PHPMD.LongVariable)
  */
 class BackendEventListener
 {
@@ -40,14 +42,14 @@ class BackendEventListener
      *
      * @var int
      */
-    private $intDuplicationSourceId;
+    private int $intDuplicationSourceId = 0;
 
     /**
      * The database connection.
      *
-     * @var \Doctrine\DBAL\Connection
+     * @var Connection
      */
-    private $connection;
+    private Connection $connection;
 
     /**
      * The ArticleContent constructor.
@@ -64,6 +66,7 @@ class BackendEventListener
             );
             // @codingStandardsIgnoreEnd
             $connection = System::getContainer()->get('database_connection');
+            assert($connection instanceof Connection);
         }
         $this->connection = $connection;
     }
@@ -121,9 +124,7 @@ class BackendEventListener
      * Duplicate the content entries.
      *
      * @param string $strTable         Table.
-     *
      * @param int    $intSourceId      The Source Id.
-     *
      * @param int    $intDestinationId The Destination Id.
      *
      * @return void
@@ -138,9 +139,9 @@ class BackendEventListener
             ->andWhere('t.ptable=:ptable')
             ->setParameter('id', $intSourceId)
             ->setParameter('ptable', $strTable)
-            ->execute();
+            ->executeQuery();
 
-        while ($row = $objContent->fetch(\PDO::FETCH_ASSOC)) {
+        while ($row = $objContent->fetchAssociative()) {
             $arrContent        = $row;
             $arrContent['pid'] = $intDestinationId;
             unset($arrContent['id']);
@@ -149,7 +150,7 @@ class BackendEventListener
                 ->createQueryBuilder()
                 ->insert('tl_content')
                 ->setParameters($arrContent)
-                ->execute();
+                ->executeQuery();
         }
     }
 
@@ -162,7 +163,7 @@ class BackendEventListener
      */
     public function setWidgetLanguage(ManipulateWidgetEvent $event)
     {
-        if ($event->getWidget()->type != 'article') {
+        if ($event->getWidget()->type !== 'article') {
             return;
         }
 
@@ -170,6 +171,7 @@ class BackendEventListener
         $dataProvider = $event->getEnvironment()->getDataProvider($event->getModel()->getProviderName());
         $language     = $dataProvider->getCurrentLanguage() ?: '-';
 
+        /** @psalm-suppress UndefinedMagicPropertyAssignment */
         $event->getWidget()->lang = $language;
     }
 }

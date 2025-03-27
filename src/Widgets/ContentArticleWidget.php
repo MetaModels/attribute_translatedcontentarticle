@@ -3,7 +3,7 @@
 /**
  * This file is part of MetaModels/attribute_translatedcontentarticle.
  *
- * (c) 2012-2022 The MetaModels team.
+ * (c) 2012-2024 The MetaModels team.
  *
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
@@ -15,7 +15,7 @@
  * @author     Andreas Dziemba <adziemba@web.de>
  * @author     Ingolf Steinhardt <info@e-spin.de>
  * @author     Stefan Heimes <stefan_heimes@hotmail.com>
- * @copyright  2012-2022 The MetaModels team.
+ * @copyright  2012-2024 The MetaModels team.
  * @license    https://github.com/MetaModels/attribute_translatedcontentarticle/blob/master/LICENSE LGPL-3.0-or-later
  * @filesource
  */
@@ -30,13 +30,20 @@ use ContaoCommunityAlliance\DcGeneral\Contao\Compatibility\DcCompat;
 use ContaoCommunityAlliance\DcGeneral\Contao\View\Contao2BackendView\ContaoBackendViewTemplate;
 use ContaoCommunityAlliance\DcGeneral\Contao\View\Contao2BackendView\Widget\AbstractWidget;
 use ContaoCommunityAlliance\DcGeneral\Data\MultiLanguageDataProviderInterface;
+use ContaoCommunityAlliance\Translator\TranslatorInterface as ccaTranslator;
 use Doctrine\DBAL\Connection;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\RequestStack;
+use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
  * Class ArticleWidget
  *
  * @package MetaModels\AttributeTranslatedContentArticleBundle\Widgets
+ *
+ * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
+ * @psalm-suppress PropertyNotSetInConstructor
  */
 class ContentArticleWidget extends AbstractWidget
 {
@@ -59,7 +66,7 @@ class ContentArticleWidget extends AbstractWidget
      *
      * @var string
      */
-    protected $subTemplate = 'widget_contentarticle';
+    protected $subTemplate = 'widget_translatedcontentarticle';
 
     /**
      * Flag if the current entry has an id.
@@ -78,16 +85,18 @@ class ContentArticleWidget extends AbstractWidget
     /**
      * The database connection.
      *
-     * @var \Doctrine\DBAL\Connection
+     * @var Connection
      */
-    private $connection;
+    private Connection $connection;
 
     /**
      * The contao input.
      *
-     * @var \Contao\CoreBundle\Framework\Adapter|Input
+     * @var Adapter|Input
      */
-    private $input;
+    private Adapter|Input $input;
+
+    private TranslatorInterface $translator;
 
     /**
      * Compat layer.
@@ -102,7 +111,7 @@ class ContentArticleWidget extends AbstractWidget
      * @inheritDoc
      */
     public function __construct(
-        $arrAttributes = null,
+        ?array $arrAttributes = null,
         DcCompat $dcCompat = null,
         Connection $connection = null,
         Adapter $input = null,
@@ -116,6 +125,7 @@ class ContentArticleWidget extends AbstractWidget
             );
             // @codingStandardsIgnoreEnd
             $connection = System::getContainer()->get('database_connection');
+            assert($connection instanceof Connection);
         }
         $this->connection = $connection;
 
@@ -126,7 +136,8 @@ class ContentArticleWidget extends AbstractWidget
                 E_USER_DEPRECATED
             );
             // @codingStandardsIgnoreEnd
-            $input = System::getContainer()->get('contao.framework')->getAdapter(Input::class);
+            $input = System::getContainer()->get('contao.framework')?->getAdapter(Input::class);
+            assert($input instanceof Adapter);
         }
         $this->input = $input;
 
@@ -137,12 +148,15 @@ class ContentArticleWidget extends AbstractWidget
                 E_USER_DEPRECATED
             );
             // @codingStandardsIgnoreEnd
+
             $translator = System::getContainer()->get('translator');
+            assert($translator instanceof TranslatorInterface);
         }
         $this->translator = $translator;
 
         parent::__construct($arrAttributes, $dcCompat);
 
+        /** @psalm-suppress InternalMethod - Class Adapter is internal, not the __call() method. Blame Contao. */
         $currentID        = $this->input->get('id');
         $this->hasEmptyId = empty($currentID);
     }
@@ -198,7 +212,7 @@ class ContentArticleWidget extends AbstractWidget
             case 'subTemplate':
                 return isset($this->subTemplate);
             default:
-                return parent::__get($strKey);
+                return parent::__isset($strKey);
         }
     }
 
@@ -213,10 +227,15 @@ class ContentArticleWidget extends AbstractWidget
      */
     public function generate()
     {
+        $requestStack = System::getContainer()->get('request_stack');
+        assert($requestStack instanceof RequestStack);
+        $request = $requestStack->getCurrentRequest();
+        assert($request instanceof Request);
+
         // Retrieve current language.
         $currentLang = '';
         if (Environment::get('isAjaxRequest')) {
-            $currentLang = Input::post('lang');
+            $currentLang = (string) $request->request->get('lang');
         } else {
             $dataProvider = $this->getEnvironment()->getDataProvider();
             if ($dataProvider instanceof MultiLanguageDataProviderInterface) {
@@ -224,33 +243,39 @@ class ContentArticleWidget extends AbstractWidget
             }
         }
 
-        $rootTable = $this->getRootMetaModelTable($this->strTable);
+        $rootTable    = $this->getRootMetaModelTable($this->strTable);
 
-        $strQuery = http_build_query([
-                                         'do'          => 'metamodel_' . ($rootTable ?: 'table_not_found'),
-                                         'table'       => 'tl_content',
-                                         'ptable'      => $this->strTable,
-                                         'id'          => $this->currentRecord,
-                                         'mid'         => $this->currentRecord,
-                                         'slot'        => $this->strName,
-                                         'lang'        => $currentLang,
-                                         'popup'       => 1,
-                                         'nb'          => 1,
-                                         'langSupport' => 1,
-                                         'rt'          => REQUEST_TOKEN,
-                                     ]);
+        $urlGenerator = System::getContainer()->get('router');
+        assert($urlGenerator instanceof UrlGeneratorInterface);
+
+        $url = $urlGenerator->generate(
+            'metamodels.translated-content-article',
+            [
+                'tableName' => $rootTable,
+                'attribute' => $this->strName,
+                'itemId'    => (string) $this->currentRecord,
+                'lang'      => $currentLang,
+                'id'        => (string) $this->currentRecord,
+                'ref'       => $request->attributes->get('_contao_referer_id'),
+                'rt'        => System::getContainer()->get('contao.csrf.token_manager')?->getDefaultTokenValue() ?? ''
+            ]
+        );
 
         $contentElements =
             $this->getContentTypesByRecordId($this->currentRecord, $rootTable, $this->strName, $currentLang);
 
+        $translator = $this->getEnvironment()->getTranslator();
+        assert($translator instanceof ccaTranslator);
+
         $content = (new ContaoBackendViewTemplate($this->subTemplate))
-            ->setTranslator($this->getEnvironment()->getTranslator())
+            ->setTranslator($translator)
+            ->set('translator', $this->translator)
             ->set('name', $this->strName)
             ->set('id', $this->strId)
             ->set('label', $this->label)
             ->set('readonly', $this->readonly)
             ->set('hasEmptyId', $this->hasEmptyId)
-            ->set('link', 'contao?' . $strQuery)
+            ->set('link', $url)
             ->set('elements', $contentElements)
             ->set('lang', $currentLang)
             ->parse();
@@ -263,7 +288,7 @@ class ContentArticleWidget extends AbstractWidget
      *
      * @param string $tableName Table name to Check.
      *
-     * @return bool|string Returns RootMetaModelTable.
+     * @return string Returns RootMetaModelTable.
      *
      * @throws \Exception Throws an Exception.
      */
@@ -276,7 +301,7 @@ class ContentArticleWidget extends AbstractWidget
             ->select('t.tableName, d.renderType, d.ptable')
             ->from('tl_metamodel', 't')
             ->leftJoin('t', 'tl_metamodel_dca', 'd', '(t.id=d.pid)')
-            ->execute();
+            ->executeQuery();
 
         while ($row = $statement->fetchAssociative()) {
             $tables[$row['tableName']] = [
@@ -285,9 +310,9 @@ class ContentArticleWidget extends AbstractWidget
             ];
         }
 
-        $getTable = function ($tableName) use (&$getTable, $tables) {
+        $getTable = static function (string $tableName) use (&$getTable, $tables): string {
             if (!isset($tables[$tableName])) {
-                return false;
+                return '';
             }
 
             $arrTable = $tables[$tableName];
@@ -326,7 +351,7 @@ class ContentArticleWidget extends AbstractWidget
     ): array {
         $contentElements = [];
 
-        if (empty($recordId) || empty($ptableName)) {
+        if (null === $recordId || '' === $ptableName) {
             return $contentElements;
         }
 
@@ -343,7 +368,7 @@ class ContentArticleWidget extends AbstractWidget
             ->setParameter('ptable', $ptableName)
             ->setParameter('slot', $slotName)
             ->setParameter('lang', $currentLang)
-            ->execute();
+            ->executeQuery();
 
         while ($row = $statement->fetchAssociative()) {
             $contentElements[] = [

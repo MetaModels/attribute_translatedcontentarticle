@@ -44,12 +44,4 @@ class AttributeTypeFactory extends AbstractSimpleAttributeTypeFactory
         $this->typeIcon  = 'bundles/metamodelsattributetranslatedcontentarticle/article.png';
         $this->typeClass = TranslatedContentArticle::class;
     }
-
-    /**
-     * {@inheritDoc}
-     */
-    public function createInstance($information, $metaModel)
-    {
-        return new $this->typeClass($metaModel, $information);
-    }
 }

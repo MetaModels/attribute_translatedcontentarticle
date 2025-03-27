@@ -1,0 +1,10 @@
+metamodels.translated-content-article:
+  path: /contao/metamodel/{tableName}/{itemId}/{lang}/translated-content-article/{attribute}
+  defaults:
+    _controller: MetaModels\AttributeTranslatedContentArticleBundle\Controller\Backend\MetaModelController
+    _scope: backend
+    _store_referrer: true
+    _token_check: true
+  requirements:
+    itemId: '[a-zA-Z0-9]*'
+    lang: '[a-z]{2}(_[A-Z])?'
