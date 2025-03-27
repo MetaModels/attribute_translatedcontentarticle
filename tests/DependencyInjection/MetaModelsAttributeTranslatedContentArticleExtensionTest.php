@@ -3,7 +3,7 @@
 /**
  * This file is part of MetaModels/attribute_translatedcontentarticle.
  *
- * (c) 2012-2024 The MetaModels team.
+ * (c) 2012-2025 The MetaModels team.
  *
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
@@ -15,7 +15,7 @@
  * @author     Stefan Heimes <stefan_heimes@hotmail.com>
  * @author     Sven Baumann <baumann.sv@gmail.com>
  * @author     Ingolf Steinhardt <info@e-spin.de>
- * @copyright  2012-2024 The MetaModels team.
+ * @copyright  2012-2025 The MetaModels team.
  * @license    https://github.com/MetaModels/attribute_translatedcontentarticle/blob/master/LICENSE LGPL-3.0-or-later
  * @filesource
  */
@@ -30,7 +30,7 @@ use MetaModels\AttributeTranslatedContentArticleBundle\Attribute\AttributeTypeFa
 use MetaModels\AttributeTranslatedContentArticleBundle\EventListener\BackendEventListener;
 use MetaModels\AttributeTranslatedContentArticleBundle\EventListener\GetOptionsListener;
 use MetaModels\AttributeTranslatedContentArticleBundle\DependencyInjection\MetaModelsAttributeTranslatedContentArticleExtension;
-use MetaModels\AttributeTranslatedContentArticleBundle\FileUsage\FileUsageProvider;
+use MetaModels\AttributeTranslatedContentArticleBundle\MetaModelsAttributeTranslatedContentArticleBundle;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 // phpcs:enable
@@ -47,6 +47,8 @@ class MetaModelsAttributeTranslatedContentArticleExtensionTest extends TestCase
     public function testLoad(): void
     {
         $container = new ContainerBuilder();
+        $container->setParameter('kernel.bundles', [MetaModelsAttributeTranslatedContentArticleBundle::class]);
+
         $extension = new MetaModelsAttributeTranslatedContentArticleExtension();
         $extension->load([], $container);
 
@@ -56,7 +58,6 @@ class MetaModelsAttributeTranslatedContentArticleExtensionTest extends TestCase
             GetOptionsListener::class,
             AttributeTypeFactory::class,
             MetaModelController::class,
-            FileUsageProvider::class
         ];
 
         self::assertCount(count($expectedDefinitions), $container->getDefinitions());
