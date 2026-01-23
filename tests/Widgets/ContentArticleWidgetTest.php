@@ -67,7 +67,10 @@ class ContentArticleWidgetTest extends TestCase
         $widget
             ->expects(self::any())
             ->method('import')
-            ->withConsecutive([Config::class, 'Config']);
+            ->willReturnCallback(function ($parameters) {
+                $this->assertInstanceof(Config::class, $parameters[0]);
+                $this->assertSame('Config', $parameters[1]);
+            });
 
         self::assertEmpty($widget->getAttributes());
     }
