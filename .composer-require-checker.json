@@ -13,6 +13,7 @@
     "InspiredMinds\\ContaoFileUsage\\Result\\FileTreeSingleResult",
     "InspiredMinds\\ContaoFileUsage\\Result\\ResultInterface",
     "InspiredMinds\\ContaoFileUsage\\Result\\ResultsCollection",
-    "tl_content"
+    "tl_content",
+    "MetaModels\\AttributeContentArticleBundle\\MetaModelsAttributeContentArticleBundle"
   ]
 }

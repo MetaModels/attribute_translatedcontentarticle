@@ -48,7 +48,7 @@ class ContentArticleWidgetTest extends TestCase
 
         $input = $this->getMockBuilder(Adapter::class)
                       ->disableOriginalConstructor()
-                      ->setMethods(['get'])
+                      ->addMethods(['get'])
                       ->getMock();
 
         $input
@@ -61,7 +61,7 @@ class ContentArticleWidgetTest extends TestCase
 
         $widget = $this->getMockBuilder(ContentArticleWidget::class)
                        ->setConstructorArgs([null, $dcCompat, $connection, $input, $translator])
-                       ->setMethods(['import'])
+                       ->onlyMethods(['import'])
                        ->getMock();
 
         $widget
