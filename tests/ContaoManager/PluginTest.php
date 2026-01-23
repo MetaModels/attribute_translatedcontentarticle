@@ -48,7 +48,6 @@ class PluginTest extends TestCase
             ->expects(self::once())
             ->method('getLoadAfter')
             ->willReturn([
-                'MetaModels\AttributeContentArticleBundle\MetaModelsAttributeContentArticleBundle',
                 MetaModelsCoreBundle::class
              ]);
         $config
