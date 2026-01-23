@@ -1,6 +1,8 @@
 services:
   MetaModels\AttributeTranslatedContentArticleBundle\EventListener\BackendEventListener:
     public: false
+    arguments:
+      - '@database_connection'
     tags:
       - name: kernel.event_listener,
         event: 'dc-general.view.contao2backend.manipulate-widget'

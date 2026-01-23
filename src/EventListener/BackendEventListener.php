@@ -146,11 +146,18 @@ class BackendEventListener
             $arrContent['pid'] = $intDestinationId;
             unset($arrContent['id']);
 
+            $parameters = [];
+            foreach (array_keys($arrContent) as $key) {
+                $parameters[$key] = '?';
+            }
+
             $this->connection
                 ->createQueryBuilder()
                 ->insert('tl_content')
-                ->setParameters($arrContent)
-                ->executeQuery();
+                ->values($parameters)
+                ->setParameters(array_values($arrContent))
+                ->executeStatement()
+            ;
         }
     }
 
