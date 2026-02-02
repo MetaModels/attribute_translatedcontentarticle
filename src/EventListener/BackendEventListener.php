@@ -26,9 +26,11 @@ use Contao\System;
 use ContaoCommunityAlliance\DcGeneral\Contao\View\Contao2BackendView\Event\ManipulateWidgetEvent;
 use ContaoCommunityAlliance\DcGeneral\Event\PostDuplicateModelEvent;
 use ContaoCommunityAlliance\DcGeneral\Event\PostPasteModelEvent;
+use Doctrine\DBAL\ArrayParameterType;
 use Doctrine\DBAL\Connection;
 use MetaModels\DcGeneral\Data\Driver;
 use MetaModels\DcGeneral\Data\Model;
+use MetaModels\IFactory;
 
 /**
  * Handles event operations on tl_metamodel_dcasetting.
@@ -52,12 +54,19 @@ class BackendEventListener
     private Connection $connection;
 
     /**
+     * @var IFactory
+     */
+    private IFactory $factory;
+
+    /**
      * The ArticleContent constructor.
      *
      * @param Connection|null $connection The connection.
      */
-    public function __construct(Connection $connection = null)
-    {
+    public function __construct(
+        IFactory $factory,
+        Connection $connection = null,
+    ) {
         if (null === $connection) {
             // @codingStandardsIgnoreStart
             @trigger_error(
@@ -69,6 +78,7 @@ class BackendEventListener
             assert($connection instanceof Connection);
         }
         $this->connection = $connection;
+        $this->factory = $factory;
     }
 
     /**
@@ -131,14 +141,33 @@ class BackendEventListener
      */
     private function duplicateContentEntries($strTable, $intSourceId, $intDestinationId)
     {
+        $metaModel = $this->factory->getMetaModel($strTable);
+        if ($metaModel === null) {
+            return;
+        }
+
+        $colNamesToCopy = [];
+        $attributes = $metaModel->getAttributes();
+        foreach ($attributes as $attribute) {
+            if ($attribute->get('type') === 'translatedcontentarticle') {
+                $colNamesToCopy[] = $attribute->getColName();
+            }
+        }
+
+        if (empty($colNamesToCopy)) {
+            return;
+        }
+
         $objContent = $this->connection
             ->createQueryBuilder()
             ->select('*')
             ->from('tl_content', 't')
             ->where('t.pid=:id')
             ->andWhere('t.ptable=:ptable')
+            ->andWhere('t.mm_slot IN (:slots)')
             ->setParameter('id', $intSourceId)
             ->setParameter('ptable', $strTable)
+            ->setParameter('slots', $colNamesToCopy, ArrayParameterType::STRING)
             ->executeQuery();
 
         while ($row = $objContent->fetchAssociative()) {
